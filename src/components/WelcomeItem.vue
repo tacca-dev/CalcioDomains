@@ -43,9 +43,8 @@
 }
 
 .resource-description {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: block;
+  line-height: 1.6;
 }
 
 @media (min-width: 1024px) {
