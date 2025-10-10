@@ -127,7 +127,7 @@ import SupportIcon from './icons/IconSupport.vue'
 .resource-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 @media (min-width: 1024px) {
