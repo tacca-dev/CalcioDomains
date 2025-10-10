@@ -16,7 +16,6 @@
 
 <style scoped>
 .resource-card {
-  margin-top: 2rem;
   display: flex;
   position: relative;
 }
