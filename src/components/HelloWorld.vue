@@ -8,36 +8,48 @@ defineProps({
 </script>
 
 <template>
-  <div class="greetings">
-    <h1 class="green">{{ msg }}</h1>
-    <h3>
-      You’ve successfully created a project with
-      <a href="https://vitejs.dev/" target="_blank" rel="noopener">Vite</a> +
+  <section class="welcome-section">
+    <h1 class="welcome-title green">{{ msg }}</h1>
+    <p class="welcome-summary">
+      Hai configurato con successo un progetto utilizzando
+      <a href="https://vitejs.dev/" target="_blank" rel="noopener">Vite</a>
+      e
       <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue 3</a>.
-    </h3>
-  </div>
+    </p>
+    <p class="welcome-guidance">
+      Inizia esplorando gli strumenti proposti qui sotto, così da organizzare velocemente lo sviluppo
+      della tua interfaccia.
+    </p>
+  </section>
 </template>
 
 <style scoped>
-h1 {
-  font-weight: 500;
+.welcome-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.welcome-title {
+  font-weight: 600;
   font-size: 2.6rem;
-  position: relative;
-  top: -10px;
 }
 
-h3 {
-  font-size: 1.2rem;
-}
-
-.greetings h1,
-.greetings h3 {
+.welcome-summary,
+.welcome-guidance {
+  font-size: 1.1rem;
+  line-height: 1.6;
   text-align: center;
 }
 
 @media (min-width: 1024px) {
-  .greetings h1,
-  .greetings h3 {
+  .welcome-section {
+    align-items: flex-start;
+  }
+
+  .welcome-summary,
+  .welcome-guidance {
     text-align: left;
   }
 }
