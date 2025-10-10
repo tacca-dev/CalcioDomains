@@ -1,9 +1,16 @@
 <script setup>
-import TheWelcome from '../components/TheWelcome.vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+onMounted(() => {
+  router.replace({ name: 'domains' })
+})
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <p>Reindirizzamento…</p>
   </main>
 </template>
