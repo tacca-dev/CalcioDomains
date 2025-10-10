@@ -144,7 +144,7 @@ import SupportIcon from './icons/IconSupport.vue'
   }
 
   .resource-list {
-    gap: 1rem;
+    gap: 0;
   }
 }
 </style>
