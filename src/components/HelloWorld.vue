@@ -17,8 +17,8 @@ defineProps({
       <a href="https://vuejs.org/" target="_blank" rel="noopener">Vue 3</a>.
     </p>
     <p class="welcome-guidance">
-      Inizia esplorando gli strumenti proposti qui sotto, così da organizzare velocemente lo sviluppo
-      della tua interfaccia.
+      Inizia esplorando gli strumenti proposti qui sotto, così da organizzare velocemente lo
+      sviluppo della tua interfaccia.
     </p>
   </section>
 </template>
