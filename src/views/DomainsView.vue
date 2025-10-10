@@ -38,12 +38,13 @@
 .domains-heading {
   font-size: 1.5rem;
   font-weight: 600;
+  color: var(--color-heading);
 }
 
 .domains-text {
   font-size: 1rem;
   line-height: 1.5;
-  color: #1f2933;
+  color: var(--color-text);
 }
 
 .domains-form {
@@ -61,26 +62,28 @@
 .domains-field {
   flex: 1;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d0d7e2;
+  border: 1px solid var(--color-border);
+  background-color: #ffffff;
 }
 
 .domains-suffix {
   display: flex;
   align-items: center;
   padding: 0 0.75rem;
-  border: 1px solid #d0d7e2;
-  background-color: #f3f4f6;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-background-soft);
 }
 
 .domains-button {
   padding: 0.5rem 1rem;
-  border: 1px solid #d0d7e2;
+  border: 1px solid var(--color-border);
   background-color: #ffffff;
+  color: var(--color-heading);
 }
 
 .domains-button:focus,
 .domains-button:hover {
-  background-color: #f3f4f6;
+  background-color: var(--color-background-soft);
 }
 
 @media (max-width: 640px) {
