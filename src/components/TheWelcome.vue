@@ -9,14 +9,6 @@ import SupportIcon from './icons/IconSupport.vue'
 
 <template>
   <section class="resource-section">
-    <header class="resource-header">
-      <h2 class="resource-heading">Strumenti utili per orientarti</h2>
-      <p class="resource-subtitle">
-        Consulta questa panoramica per raggiungere velocemente documentazione, tooling e supporto
-        della community Vue.
-      </p>
-    </header>
-
     <div class="resource-list">
       <WelcomeItem>
         <template #icon>
@@ -109,23 +101,6 @@ import SupportIcon from './icons/IconSupport.vue'
   gap: 2rem;
 }
 
-.resource-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.resource-heading {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--color-heading);
-}
-
-.resource-subtitle {
-  font-size: 1.1rem;
-  line-height: 1.6;
-}
-
 .resource-list {
   display: flex;
   flex-direction: column;
@@ -135,14 +110,6 @@ import SupportIcon from './icons/IconSupport.vue'
 @media (min-width: 1024px) {
   .resource-section {
     gap: 2.5rem;
-  }
-
-  .resource-header {
-    gap: 0.5rem;
-  }
-
-  .resource-heading {
-    font-size: 2rem;
   }
 
   .resource-list {
