@@ -4,15 +4,21 @@ import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <header class="app-header">
+    <img alt="Vue logo" class="brand-logo" src="@/assets/logo.svg" width="125" height="125" />
 
-    <div class="wrapper">
+    <div class="header-content">
       <HelloWorld msg="You did it!" />
 
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+      <nav class="primary-nav" aria-label="Navigazione principale">
+        <ul class="nav-links">
+          <li>
+            <RouterLink class="nav-link" to="/">Home</RouterLink>
+          </li>
+          <li>
+            <RouterLink class="nav-link" to="/about">About</RouterLink>
+          </li>
+        </ul>
       </nav>
     </div>
   </header>
@@ -21,65 +27,87 @@ import HelloWorld from './components/HelloWorld.vue'
 </template>
 
 <style scoped>
-header {
+.app-header {
   line-height: 1.5;
   max-height: 100vh;
 }
 
-.logo {
+.brand-logo {
   display: block;
   margin: 0 auto 2rem;
 }
 
-nav {
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.primary-nav {
   width: 100%;
-  font-size: 12px;
-  text-align: center;
   margin-top: 2rem;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+.nav-links {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
+.nav-link {
   display: inline-block;
   padding: 0 1rem;
   border-left: 1px solid var(--color-border);
 }
 
-nav a:first-of-type {
+.nav-links li:first-of-type .nav-link {
   border: 0;
 }
 
+.nav-link.router-link-exact-active {
+  color: var(--color-text);
+}
+
+.nav-link.router-link-exact-active:hover {
+  background-color: transparent;
+}
+
 @media (min-width: 1024px) {
-  header {
+  .app-header {
     display: flex;
-    place-items: center;
+    align-items: center;
     padding-right: calc(var(--section-gap) / 2);
   }
 
-  .logo {
+  .brand-logo {
     margin: 0 2rem 0 0;
   }
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+  .header-content {
+    align-items: flex-start;
   }
 
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
+  .primary-nav {
+    width: auto;
     margin-top: 1rem;
+  }
+
+  .nav-links {
+    justify-content: flex-start;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .nav-link {
+    padding: 1rem;
+  }
+
+  .nav-links li:first-of-type .nav-link {
+    padding-left: 0;
   }
 }
 </style>
