@@ -3,7 +3,8 @@
     <div class="domains-body">
       <h1 class="domains-heading">Cerca Domini .calcio</h1>
       <p class="domains-text">
-        Trova e verifica la disponibilità del tuo dominio .calcio perfetto. Registrazione istantanea, proprietà 100% tua.
+        Trova e verifica la disponibilità del tuo dominio .calcio perfetto. Registrazione
+        istantanea, proprietà 100% tua.
       </p>
       <form class="domains-form" @submit.prevent>
         <div class="domains-input-group">
