@@ -24,11 +24,11 @@
 
 <style scoped>
 .domains-wrapper {
-  padding: 2rem 1rem;
+  padding: 2rem 1.5rem;
 }
 
 .domains-body {
-  max-width: 40rem;
+  max-width: 38rem;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -36,47 +36,56 @@
 }
 
 .domains-heading {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 600;
 }
 
 .domains-text {
   font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2933;
 }
 
 .domains-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .domains-input-group {
   display: flex;
+  align-items: stretch;
   gap: 0.5rem;
-  align-items: center;
 }
 
 .domains-field {
   flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #cbd5e1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d0d7e2;
 }
 
 .domains-suffix {
-  padding: 0.5rem;
-  border: 1px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  border: 1px solid #d0d7e2;
+  background-color: #f3f4f6;
 }
 
 .domains-button {
   padding: 0.5rem 1rem;
-  border: 1px solid #cbd5e1;
-  background-color: transparent;
+  border: 1px solid #d0d7e2;
+  background-color: #ffffff;
+}
+
+.domains-button:focus,
+.domains-button:hover {
+  background-color: #f3f4f6;
 }
 
 @media (max-width: 640px) {
   .domains-input-group {
     flex-direction: column;
-    align-items: stretch;
   }
 
   .domains-suffix,
