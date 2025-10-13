@@ -1,3 +1,41 @@
+<script setup>
+import { onMounted, ref } from 'vue'
+import { searchDomain } from '@/services/catalyst'
+import { authenticateFreename } from '@/services/freename'
+
+const domainName = ref('')
+const loading = ref(false)
+const error = ref(null)
+const result = ref(null)
+
+onMounted(async () => {
+    try {
+      const token = await authenticateFreename()
+      console.log('✅ Authentication successful! Token:', token)
+    } catch (error) {
+      console.error('❌ Authentication failed:', error)
+    }
+  })
+  
+async function handleSearch() {
+  if (!domainName.value.trim()) return
+
+  loading.value = true
+  error.value = null
+  result.value = null
+
+  try {
+    result.value = await searchDomain(domainName.value)
+    console.log('Search result:', result.value)
+  } catch (err) {
+    error.value = 'Errore durante la ricerca del dominio'
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
 <template>
   <section class="domains-wrapper">
     <div class="domains-body">
@@ -6,18 +44,23 @@
         Trova e verifica la disponibilità del tuo dominio .calcio perfetto. Registrazione
         istantanea, proprietà 100% tua.
       </p>
-      <form class="domains-form" @submit.prevent>
+      <form class="domains-form" @submit.prevent="handleSearch">
         <div class="domains-input-group">
           <input
+            v-model="domainName"
             class="domains-field"
             type="text"
             name="domain"
             placeholder="Inserisci il nome del dominio..."
             aria-label="Cerca dominio .calcio"
+            :disabled="loading"
           />
           <span class="domains-suffix">.calcio</span>
-          <button class="domains-button" type="submit">Cerca</button>
+          <button class="domains-button" type="submit" :disabled="loading">
+            {{ loading ? 'Ricerca...' : 'Cerca' }}
+          </button>
         </div>
+        <p v-if="error" class="error-message">{{ error }}</p>
       </form>
     </div>
   </section>
@@ -85,6 +128,17 @@
 .domains-button:focus,
 .domains-button:hover {
   background-color: var(--color-background-soft);
+}
+
+.domains-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 640px) {
