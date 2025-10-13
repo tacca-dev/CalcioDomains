@@ -39,7 +39,6 @@ export async function authenticateFreename() {
     accessToken = data.access_token
     tokenExpiry = Date.now() + (data.expires_in - 60) * 1000
 
-    console.log('Freename authentication successful')
     return accessToken
 
   } catch (error) {
@@ -54,4 +53,41 @@ export async function authenticateFreename() {
  */
 export async function getValidToken() {
   return await authenticateFreename()
+}
+
+/**
+ * Search for domain availability on Freename
+ * @param {string[]} domains - Array of domain names to search (e.g., ["asti.calcio", "juventus.calcio"])
+ * @returns {Promise<object>} Search results from Freename API
+ */
+export async function searchDomains(domains) {
+  try {
+    const token = await getValidToken()
+
+    // Join domains with space and encode with encodeURIComponent
+    const searchString = domains.join(' ')
+
+    // Call Freename search API with explicit URI encoding
+    const response = await fetch(
+      `${FREENAME_BASE_URL}/api/v1/reseller-logic/search?searchString=${encodeURIComponent(searchString)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    )
+
+    if (!response.ok) {
+      const errorData = await response.text()
+      throw new Error(`Freename search failed: ${response.status} - ${errorData}`)
+    }
+
+    const data = await response.json()
+    return data
+
+  } catch (error) {
+    console.error('Error searching domains on Freename:', error)
+    throw error
+  }
 }
