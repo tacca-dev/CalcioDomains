@@ -1,8 +1,5 @@
 const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
 
-// OpenAI API Key - fallback to hardcoded if .env not available (production)
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY
-
 /**
  * Call getPrompt Catalyst Function
  * @param {string|null} domainName - The domain name to search (optional - if null, returns template)
@@ -38,42 +35,32 @@ export async function callGetPromptFunction(domainName = null) {
 }
 
 /**
- * Call OpenAI GPT-4o API
+ * Call evaluate-domain Catalyst Function (which calls OpenAI GPT-4o)
  * @param {string} prompt - The prompt to send to GPT
  * @returns {Promise<object>} The parsed JSON response from GPT
  */
 export async function callGPT4o(prompt) {
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`${CATALYST_BASE_URL}/evaluate-domain`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.1
-      })
+      body: JSON.stringify({ prompt })
     })
 
     if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`OpenAI API error: ${response.status} - ${errorData}`)
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const data = await response.json()
-    let gptResponse = data.choices[0].message.content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
 
-    // Parse the JSON response from GPT
-    return JSON.parse(gptResponse)
+    // Catalyst wraps the response in an "output" field as a JSON string
+    const parsedOutput = JSON.parse(data.output)
+
+    return parsedOutput
   } catch (error) {
-    console.error('Error calling GPT-4o:', error)
+    console.error('Error calling evaluate-domain function:', error)
     throw error
   }
 }

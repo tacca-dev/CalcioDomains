@@ -1,18 +1,12 @@
-// Freename API Configuration - fallback to hardcoded if .env not available (production)
-const FREENAME_BASE_URL = import.meta.env.VITE_FREENAME_BASE_URL || process.env.FREENAME_BASE_URL || 'https://apis.freename.io'
-
-const FREENAME_INITIAL_TOKEN = import.meta.env.VITE_FREENAME_INITIAL_TOKEN || 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InhJYTdTZDFKZThxU01ZaHY4WVhaYSJ9.eyJpc3MiOiJodHRwczovL2ZyZWVuYW1lLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJsS1hYa1FpS3hmRFdyTmUzYWtnSEFOQWxZS0tiTWNVMkBjbGllbnRzIiwiYXVkIjoiaHR0cHM6Ly9hdXRoMC8iLCJpYXQiOjE3NTk3MzEyNTQsImV4cCI6MTc2MjMyMzI1NCwic2NvcGUiOiJyZWFkIEFkbWluIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIiwiYXpwIjoibEtYWGtRaUt4ZkRXck5lM2FrZ0hBTkFsWUtLYk1jVTIiLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiQWRtaW4iXX0.h4MWXWLN2r0YqNTjC8DxSzB6l9LfKVAQklHX_IyU96iIJupH93lJbzHZ0okajW666f9LC3AO3jGSJfEZ2COMNH1piYNyNgVRnzqM7l0hk8g5oYV_c9BHaBARLwd-LqMeCbN1U6xa2BSjXUIQd-yDm1qCj5hFlT8b199HdltpBq3S9HJ2XrHPUN0_Yu70Ik2GXc1TW0uYLPry4H5arlq4rE9wnVALeH99QjiAb86ScATsL-C5PS3Q4oyOCl2n6lrpRmLAdWhzeDa2toDrmr3eUeKpo1nfeJ5umEfo-jc-KdgHtzBdFAdr6MuV5iKWgrrYg_LW9Wga2Vb3yY5Ot5lPDQ'
-
-const FREENAME_USERNAME = import.meta.env.VITE_FREENAME_USERNAME || process.env.FREENAME_USERNAME || 'operations@simplify-europe.co.uk'
-
-const FREENAME_PASSWORD = import.meta.env.VITE_FREENAME_PASSWORD || process.env.FREENAME_PASSWORD || '5&.B,(IgE.lbE[#5'
+// Catalyst Backend URL
+const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
 
 // Token storage
 let accessToken = null
 let tokenExpiry = null
 
 /**
- * Authenticate with Freename API
+ * Authenticate with Freename API via Catalyst backend
  * @returns {Promise<string>} The access token
  */
 export async function authenticateFreename() {
@@ -22,28 +16,29 @@ export async function authenticateFreename() {
   }
 
   try {
-    const response = await fetch(`${FREENAME_BASE_URL}/api/v1/auth/login`, {
+    const response = await fetch(`${CATALYST_BASE_URL}/authenticate-freename`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${FREENAME_INITIAL_TOKEN}`
-      },
-      body: JSON.stringify({
-        username: FREENAME_USERNAME,
-        password: FREENAME_PASSWORD
-      })
+        'Content-Type': 'application/json'
+      }
     })
 
     if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`Freename authentication failed: ${response.status} - ${errorData}`)
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const data = await response.json()
 
+    // Catalyst wraps the response in an "output" field as a JSON string
+    const parsedOutput = JSON.parse(data.output)
+
+    if (parsedOutput.error) {
+      throw new Error(parsedOutput.error)
+    }
+
     // Store token and calculate expiry time (subtract 60 seconds for safety margin)
-    accessToken = data.access_token
-    tokenExpiry = Date.now() + (data.expires_in - 60) * 1000
+    accessToken = parsedOutput.access_token
+    tokenExpiry = Date.now() + (parsedOutput.expires_in - 60) * 1000
 
     return accessToken
 
@@ -62,7 +57,7 @@ export async function getValidToken() {
 }
 
 /**
- * Search for domain availability on Freename
+ * Search for domain availability on Freename via Catalyst backend
  * @param {string[]} domains - Array of domain names to search (e.g., ["asti.calcio", "juventus.calcio"])
  * @returns {Promise<object>} Search results from Freename API
  */
@@ -70,27 +65,32 @@ export async function searchDomains(domains) {
   try {
     const token = await getValidToken()
 
-    // Join domains with space and encode with encodeURIComponent
-    const searchString = domains.join(' ')
-
-    // Call Freename search API with explicit URI encoding
-    const response = await fetch(
-      `${FREENAME_BASE_URL}/api/v1/reseller-logic/search?searchString=${encodeURIComponent(searchString)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    )
+    // Call Catalyst search-freename-domains function
+    const response = await fetch(`${CATALYST_BASE_URL}/search-freename-domains`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        token: token,
+        domains: domains
+      })
+    })
 
     if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`Freename search failed: ${response.status} - ${errorData}`)
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     const data = await response.json()
-    return data
+
+    // Catalyst wraps the response in an "output" field as a JSON string
+    const parsedOutput = JSON.parse(data.output)
+
+    if (parsedOutput.error) {
+      throw new Error(parsedOutput.error)
+    }
+
+    return parsedOutput
 
   } catch (error) {
     console.error('Error searching domains on Freename:', error)
