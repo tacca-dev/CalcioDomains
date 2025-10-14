@@ -16,6 +16,7 @@ const mainDomainResult = ref(null)
 const suggestionsResults = ref([])
 const loadingSuggestions = ref(false)
 const freenameApiResponse = ref(null)
+const gptApiResponse = ref(null)
 
 // Load prompt template and coefficients on mount
 onMounted(async () => {
@@ -38,6 +39,7 @@ async function handleSearch() {
   suggestionsResults.value = []
   loadingSuggestions.value = false
   freenameApiResponse.value = null
+  gptApiResponse.value = null
 
   try {
     // Step 1: Compile prompt template with domain name
@@ -45,45 +47,63 @@ async function handleSearch() {
 
     // Step 2: Call GPT with compiled prompt
     const evaluation = await callGPT4o(compiledPrompt)
+    gptApiResponse.value = evaluation // Store GPT response
 
     // Step 3: Build array of domains to search (main domain + suggestions)
     const mainDomain = `${domainName.value}.calcio`
-    const suggestedDomains = evaluation.suggestions.map(s => `${s.domain}.calcio`)
-    const allDomains = [mainDomain, ...suggestedDomains]
 
-    // Step 4: Search main domain first
-    try {
-      const mainResult = await searchDomains([mainDomain])
-      freenameApiResponse.value = mainResult // Store full API response
-      const exactMatches = mainResult.data.result.find(r => r.type === 'EXACT_MATCH')
+    // Step 4: Check if main domain is reserved
+    if (evaluation.category === 'Riservato') {
+      // Domain is reserved - skip Freename API call
+      mainDomainResult.value = {
+        domain: mainDomain,
+        reserved: true,
+        category: evaluation.category,
+        potentialCategory: evaluation.potential_category
+      }
+      loading.value = false // Show reserved message immediately
+    } else {
+      // Domain is not reserved - call Freename API
+      try {
+        const mainResult = await searchDomains([mainDomain])
+        freenameApiResponse.value = mainResult // Store full API response
+        const exactMatches = mainResult.data.result.find(r => r.type === 'EXACT_MATCH')
 
-      if (exactMatches) {
-        const domainData = exactMatches.elements.find(el => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === mainDomain)
+        if (exactMatches) {
+          const domainData = exactMatches.elements.find(el => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === mainDomain)
 
-        if (domainData) {
-          const category = evaluation.category.toLowerCase()
-          const coefficient = coefficients.value[category] || 1
+          if (domainData) {
+            const category = evaluation.category.toLowerCase()
+            const coefficient = coefficients.value[category] || 1
 
-          mainDomainResult.value = {
-            domain: domainData.name,
-            available: domainData.availabilityStatus === 'AVAILABLE',
-            basePrice: domainData.price.amount,
-            coefficient: coefficient,
-            finalPrice: parseFloat((domainData.price.amount * coefficient).toFixed(2)),
-            category: evaluation.category
+            mainDomainResult.value = {
+              domain: domainData.name,
+              available: domainData.availabilityStatus === 'AVAILABLE',
+              basePrice: domainData.price.amount,
+              coefficient: coefficient,
+              finalPrice: parseFloat((domainData.price.amount * coefficient).toFixed(2)),
+              category: evaluation.category,
+              reserved: false
+            }
           }
         }
-      }
 
-      loading.value = false // Main domain loaded, show it
-    } catch (err) {
-      console.error(`Error searching main domain:`, err)
-      loading.value = false
+        loading.value = false // Main domain loaded, show it
+      } catch (err) {
+        console.error(`Error searching main domain:`, err)
+        loading.value = false
+      }
     }
 
     // Step 5: Search suggestions in batches of 5 (in background)
     loadingSuggestions.value = true
     const suggestions = []
+
+    // Filter out reserved suggestions and build domains array
+    const nonReservedSuggestions = evaluation.suggestions.filter(s => s.category !== 'Riservato')
+    const reservedSuggestions = evaluation.suggestions.filter(s => s.category === 'Riservato')
+    const suggestedDomains = nonReservedSuggestions.map(s => `${s.domain}.calcio`)
+
     const batchSize = 5
 
     for (let i = 0; i < suggestedDomains.length; i += batchSize) {
@@ -98,15 +118,17 @@ async function handleSearch() {
             const domainData = exactMatches.elements.find(el => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === domain)
 
             if (domainData) {
-              const suggestionIndex = allDomains.indexOf(domain) - 1
-              const suggestionData = evaluation.suggestions[suggestionIndex]
+              // Find the suggestion data by domain name
+              const domainWithoutTld = domain.replace('.calcio', '')
+              const suggestionData = nonReservedSuggestions.find(s => s.domain === domainWithoutTld)
               const category = (suggestionData?.category || evaluation.category).toLowerCase()
               const coefficient = coefficients.value[category] || 1
 
               suggestions.push({
                 domain: domainData.name,
                 available: domainData.availabilityStatus === 'AVAILABLE',
-                finalPrice: parseFloat((domainData.price.amount * coefficient).toFixed(2))
+                finalPrice: parseFloat((domainData.price.amount * coefficient).toFixed(2)),
+                reserved: false
               })
             }
           })
@@ -115,6 +137,16 @@ async function handleSearch() {
         console.error(`Error searching suggestions batch:`, err)
       }
     }
+
+    // Add reserved suggestions to the list (without price)
+    reservedSuggestions.forEach(s => {
+      suggestions.push({
+        domain: `${s.domain}.calcio`,
+        available: false,
+        finalPrice: null,
+        reserved: true
+      })
+    })
 
     suggestionsResults.value = suggestions
     loadingSuggestions.value = false
@@ -157,7 +189,11 @@ async function handleSearch() {
 
       <!-- Main domain result -->
       <div v-if="mainDomainResult" class="result-section">
-        <div v-if="mainDomainResult.available" class="result-card result-available">
+        <div v-if="mainDomainResult.reserved" class="result-card result-reserved">
+          <h3 class="result-title">✗ {{ mainDomainResult.domain }} è riservato</h3>
+          <p class="result-subtitle">Questo dominio non è disponibile per la registrazione</p>
+        </div>
+        <div v-else-if="mainDomainResult.available" class="result-card result-available">
           <h3 class="result-title">✓ {{ mainDomainResult.domain }} è disponibile!</h3>
           <div class="result-details">
             <p>Prezzo base: ${{ mainDomainResult.basePrice }}</p>
@@ -185,17 +221,21 @@ async function handleSearch() {
             v-for="suggestion in suggestionsResults"
             :key="suggestion.domain"
             class="suggestion-card"
+            :class="{ 'suggestion-reserved': suggestion.reserved }"
           >
             <span class="suggestion-domain">{{ suggestion.domain }}</span>
-            <span class="suggestion-price">${{ suggestion.finalPrice }}</span>
+            <span v-if="suggestion.reserved" class="suggestion-reserved-label">Riservato</span>
+            <span v-else class="suggestion-price">${{ suggestion.finalPrice }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Freename API Response -->
-      <div v-if="freenameApiResponse" class="api-response-section">
-        <h3 class="api-response-title">Risposta API Freename</h3>
-        <pre class="api-response-content">{{ JSON.stringify(freenameApiResponse, null, 2) }}</pre>
+      <!-- API Response (Freename or GPT based on domain status) -->
+      <div v-if="mainDomainResult && (mainDomainResult.reserved ? gptApiResponse : freenameApiResponse)" class="api-response-section">
+        <h3 class="api-response-title">
+          {{ mainDomainResult.reserved ? 'Risposta AI' : 'Risposta API Freename' }}
+        </h3>
+        <pre class="api-response-content">{{ JSON.stringify(mainDomainResult.reserved ? gptApiResponse : freenameApiResponse, null, 2) }}</pre>
       </div>
     </div>
   </section>
@@ -297,6 +337,11 @@ async function handleSearch() {
   border-color: #fca5a5;
 }
 
+.result-reserved {
+  background-color: #fef2f2;
+  border-color: #fca5a5;
+}
+
 .result-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -384,6 +429,15 @@ async function handleSearch() {
   background-color: var(--color-background-soft);
 }
 
+.suggestion-reserved {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.suggestion-reserved:hover {
+  background-color: #ffffff;
+}
+
 .suggestion-domain {
   font-size: 0.875rem;
   color: var(--color-text);
@@ -392,6 +446,12 @@ async function handleSearch() {
 .suggestion-price {
   font-weight: 600;
   color: var(--color-heading);
+}
+
+.suggestion-reserved-label {
+  font-size: 0.875rem;
+  color: #dc2626;
+  font-style: italic;
 }
 
 /* API Response */
