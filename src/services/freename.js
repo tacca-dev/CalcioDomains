@@ -1,5 +1,15 @@
-// Freename API Base URL - Replace with actual URL provided by Freename
-const FREENAME_BASE_URL = import.meta.env.VITE_FREENAME_BASE_URL || 'https://api.freename.io'
+// Freename API Configuration - fallback to hardcoded if .env not available (production)
+const FREENAME_BASE_URL = import.meta.env.VITE_FREENAME_BASE_URL ||
+  'https://apis.freename.io'
+
+const FREENAME_INITIAL_TOKEN = import.meta.env.VITE_FREENAME_INITIAL_TOKEN ||
+  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InhJYTdTZDFKZThxU01ZaHY4WVhaYSJ9.eyJpc3MiOiJodHRwczovL2ZyZWVuYW1lLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJsS1hYa1FpS3hmRFdyTmUzYWtnSEFOQWxZS0tiTWNVMkBjbGllbnRzIiwiYXVkIjoiaHR0cHM6Ly9hdXRoMC8iLCJpYXQiOjE3NTk3MzEyNTQsImV4cCI6MTc2MjMyMzI1NCwic2NvcGUiOiJyZWFkIEFkbWluIiwiZ3R5IjoiY2xpZW50LWNyZWRlbnRpYWxzIiwiYXpwIjoibEtYWGtRaUt4ZkRXck5lM2FrZ0hBTkFsWUtLYk1jVTIiLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiQWRtaW4iXX0.h4MWXWLN2r0YqNTjC8DxSzB6l9LfKVAQklHX_IyU96iIJupH93lJbzHZ0okajW666f9LC3AO3jGSJfEZ2COMNH1piYNyNgVRnzqM7l0hk8g5oYV_c9BHaBARLwd-LqMeCbN1U6xa2BSjXUIQd-yDm1qCj5hFlT8b199HdltpBq3S9HJ2XrHPUN0_Yu70Ik2GXc1TW0uYLPry4H5arlq4rE9wnVALeH99QjiAb86ScATsL-C5PS3Q4oyOCl2n6lrpRmLAdWhzeDa2toDrmr3eUeKpo1nfeJ5umEfo-jc-KdgHtzBdFAdr6MuV5iKWgrrYg_LW9Wga2Vb3yY5Ot5lPDQ'
+
+const FREENAME_USERNAME = import.meta.env.VITE_FREENAME_USERNAME ||
+  'operations@simplify-europe.co.uk'
+
+const FREENAME_PASSWORD = import.meta.env.VITE_FREENAME_PASSWORD ||
+  '5&.B,(IgE.lbE[#5'
 
 // Token storage
 let accessToken = null
@@ -20,11 +30,11 @@ export async function authenticateFreename() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_FREENAME_INITIAL_TOKEN}`
+        'Authorization': `Bearer ${FREENAME_INITIAL_TOKEN}`
       },
       body: JSON.stringify({
-        username: import.meta.env.VITE_FREENAME_USERNAME,
-        password: import.meta.env.VITE_FREENAME_PASSWORD
+        username: FREENAME_USERNAME,
+        password: FREENAME_PASSWORD
       })
     })
 
