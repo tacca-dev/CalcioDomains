@@ -1,7 +1,7 @@
 const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
 
 // OpenAI API Key - fallback to hardcoded if .env not available (production)
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY || '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'
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || process.env.OPENAI_API_KEY
 
 /**
  * Call getPrompt Catalyst Function
