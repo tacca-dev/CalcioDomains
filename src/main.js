@@ -21,7 +21,6 @@ app.use(
   createAuth0({
     domain: "dev-giylww0unln6dunq.eu.auth0.com",
     clientId: "NIy1nFN8CeX42nrWAvB6jk2KNhNO77gG",
-    skipRedirectCallback: false,
     authorizationParams: {
       redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
     }
