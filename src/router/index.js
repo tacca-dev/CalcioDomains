@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import DomainsView from '../views/DomainsView.vue'
+import AuthCallback from '../views/AuthCallback.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/domains',
       name: 'domains',
       component: DomainsView
+    },
+    {
+      path: '/auth-callback',
+      name: 'auth-callback',
+      component: AuthCallback
     },
     {
       path: '/about',

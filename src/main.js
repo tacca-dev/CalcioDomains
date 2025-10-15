@@ -13,7 +13,7 @@ app.use(
     domain: "dev-giylww0unln6dunq.eu.auth0.com",
     clientId: "NIy1nFN8CeX42nrWAvB6jk2KNhNO77gG",
     authorizationParams: {
-      redirect_uri: window.location.origin
+      redirect_uri: `${window.location.origin}/auth-callback`
     }
   })
 )
