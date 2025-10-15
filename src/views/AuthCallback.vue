@@ -34,6 +34,7 @@ onMounted(async () => {
   try {
     // Get code and state from URL parameters (Auth0 callback parameters)
     const urlParams = new URLSearchParams(window.location.search)
+    console.log("url parameters: ", urlParams)
     const code = urlParams.get('code')
     const state = urlParams.get('state')
     console.log('Auth callback code:', code, 'state:', state);
