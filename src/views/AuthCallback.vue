@@ -32,26 +32,39 @@ const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalys
 
 onMounted(async () => {
   try {
-    // Get code and state from URL parameters (Auth0 callback parameters)
-    const urlParams = new URLSearchParams(window.location.search)
-    console.log("url parameters: ", urlParams)
-    const code = urlParams.get('code')
-    const state = urlParams.get('state')
-    console.log('Auth callback code:', code, 'state:', state);
+    // Wait for Auth0 SDK to complete the callback and get the token
+    // The SDK handles PKCE code_verifier internally
+    console.log('Waiting for Auth0 to complete authentication...')
 
-    if (!code) {
-      throw new Error('Codice di autorizzazione mancante')
+    // Wait a bit for Auth0 SDK to process the callback
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Check if authenticated
+    if (!isAuthenticated.value) {
+      throw new Error('Autenticazione non completata')
     }
 
-    // Call the exchange-auth0-token Advanced I/O function with code and state
+    console.log('Auth0 authentication completed, user:', user.value)
+
+    // Get the Auth0 access token (already validated by Auth0 SDK)
+    const accessToken = await getAccessTokenSilently()
+    console.log('Got access token from Auth0')
+
+    // Now send this validated token to Catalyst for third-party authentication
     const response = await fetch(`${CATALYST_BASE_URL}/exchange-auth0-token`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
       },
       body: JSON.stringify({
-        code: code,
-        state: state
+        auth0Token: accessToken,
+        userInfo: {
+          email: user.value?.email,
+          name: user.value?.name,
+          picture: user.value?.picture,
+          sub: user.value?.sub
+        }
       })
     })
 
@@ -62,6 +75,7 @@ onMounted(async () => {
     }
 
     const data = await response.json()
+    console.log('Catalyst response:', data)
 
     // Store Catalyst token if provided
     if (data.token || data.catalystToken) {
@@ -72,9 +86,6 @@ onMounted(async () => {
     if (data.user) {
       localStorage.setItem('user_info', JSON.stringify(data.user))
     }
-
-    // Wait for Auth0 SDK to complete its own processing
-    await new Promise(resolve => setTimeout(resolve, 1000))
 
     // Redirect to home or dashboard
     router.push('/')
