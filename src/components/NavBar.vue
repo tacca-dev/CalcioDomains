@@ -56,15 +56,14 @@ const {
 
 // Login function
 const login = () => {
-  loginWithRedirect()
+  loginWithRedirect({
+    redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
+  });
 }
 
 // Logout function
 const logout = () => {
-  // Use production URL if on onslate.eu domain, otherwise use local
-  const returnToUrl = window.location.hostname.includes('onslate.eu')
-    ? 'https://calciodomains-yqdhfgao.onslate.eu'
-    : window.location.origin
+  const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
 
   auth0Logout({
     logoutParams: {

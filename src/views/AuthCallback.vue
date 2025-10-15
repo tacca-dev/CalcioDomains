@@ -21,10 +21,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-// import { useAuth0 } from '@auth0/auth0-vue'
+import { useAuth0 } from '@auth0/auth0-vue'
 
 const router = useRouter()
-// const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
+const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
 const error = ref(null)
 
 // Catalyst backend URL
