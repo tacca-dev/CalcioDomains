@@ -36,6 +36,7 @@ onMounted(async () => {
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
     const state = urlParams.get('state')
+    console.log('Auth callback code:', code, 'state:', state);
 
     if (!code) {
       throw new Error('Codice di autorizzazione mancante')
