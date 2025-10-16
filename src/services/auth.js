@@ -33,11 +33,15 @@ export async function isAuthenticated() {
     }
 
     console.log('[Auth] Checking authentication status...');
-    const isAuth = await window.catalyst.auth.isUserAuthenticated();
-    console.log('[Auth] Authentication status:', isAuth);
-    return isAuth;
+    const result = await window.catalyst.auth.isUserAuthenticated();
+    console.log('[Auth] Authentication result:', result);
+
+    // isUserAuthenticated returns an object with result.content when authenticated
+    // If not authenticated or error, it will be caught in catch block
+    return true;
   } catch (error) {
-    console.error('[Auth] Error checking authentication:', error);
+    // User is not authenticated or there was an error
+    console.log('[Auth] User not authenticated or error:', error);
     return false;
   }
 }
@@ -55,17 +59,17 @@ export async function getCurrentUser() {
       return null;
     }
 
-    const isAuth = await window.catalyst.auth.isUserAuthenticated();
-    if (!isAuth) {
-      console.log('[Auth] User not authenticated, no user details available');
-      return null;
+    console.log('[Auth] Fetching current user details...');
+    const result = await window.catalyst.auth.isUserAuthenticated();
+    console.log('[Auth] User authentication result:', result);
+
+    // The user details are in result.content
+    if (result && result.content) {
+      console.log('[Auth] User details:', result.content);
+      return result.content;
     }
 
-    // Get user details using Catalyst SDK
-    console.log('[Auth] Fetching current user details...');
-    const userDetails = await window.catalyst.auth.getCurrentUser();
-    console.log('[Auth] User details:', userDetails);
-    return userDetails;
+    return null;
   } catch (error) {
     console.error('[Auth] Error getting current user:', error);
     return null;
