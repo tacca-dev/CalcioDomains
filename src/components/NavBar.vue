@@ -61,7 +61,7 @@ const {
 // Login function
 const login = () => {
   loginWithRedirect({
-    redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
+    redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/'
   });
 }
 

@@ -16,7 +16,7 @@ app.use(
     domain: "dev-giylww0unln6dunq.eu.auth0.com",
     clientId: "NIy1nFN8CeX42nrWAvB6jk2KNhNO77gG",
     authorizationParams: {
-      redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
+      redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/'
     }
   })
 )

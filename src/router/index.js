@@ -3,7 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import DomainsView from '../views/DomainsView.vue'
 // import AppRedirect from '../views/AppRedirect.vue'
 /** LOGIN AUTH0 - START */
-import AuthCallback from '../views/AuthCallback.vue'
+// import AuthCallback from '../views/AuthCallback.vue'
 /** LOGIN AUTH0 - END */
 
 const router = createRouter({
@@ -27,11 +27,12 @@ const router = createRouter({
     // },
     /** CATALYST NATIVE AUTHENTICATION - END */
     /** LOGIN AUTH0 - START */
-    {
-      path: '/auth-callback',
-      name: 'auth-callback',
-      component: AuthCallback
-    },
+    // Auth0 SDK handles callback automatically, no need for custom route
+    // {
+    //   path: '/auth-callback',
+    //   name: 'auth-callback',
+    //   component: AuthCallback
+    // },
     /** LOGIN AUTH0 - END */
     {
       path: '/about',

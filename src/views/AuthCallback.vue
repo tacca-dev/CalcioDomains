@@ -30,16 +30,18 @@ import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const router = useRouter()
-const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
+const { user, isAuthenticated } = useAuth0()
+// const { user, isAuthenticated, getAccessTokenSilently } = useAuth0() // getAccessTokenSilently needed only for Catalyst token exchange
 const error = ref(null)
 
-// Catalyst backend URL
-const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
+/** CATALYST TOKEN EXCHANGE - START */
+// Catalyst backend URL (used only if token exchange is enabled)
+// const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
+/** CATALYST TOKEN EXCHANGE - END */
 
 onMounted(async () => {
   try {
-    // Wait for Auth0 SDK to complete the callback and get the token
-    // The SDK handles PKCE code_verifier internally
+    // Wait for Auth0 SDK to complete the callback
     console.log('Waiting for Auth0 to complete authentication...')
 
     // Wait a bit for Auth0 SDK to process the callback
@@ -52,48 +54,52 @@ onMounted(async () => {
 
     console.log('Auth0 authentication completed, user:', user.value)
 
-    // Get the Auth0 access token (already validated by Auth0 SDK)
-    const accessToken = await getAccessTokenSilently()
-    console.log('Got access token from Auth0')
+    /** CATALYST TOKEN EXCHANGE - START */
+    // Get the Auth0 access token (only needed if exchanging with Catalyst)
+    // const accessToken = await getAccessTokenSilently()
+    // console.log('Got access token from Auth0')
+    /** CATALYST TOKEN EXCHANGE - END */
 
-    // Now send this validated token to Catalyst for third-party authentication
-    const response = await fetch(`${CATALYST_BASE_URL}/exchange-auth0-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        auth0Token: accessToken,
-        userInfo: {
-          email: user.value?.email,
-          name: user.value?.name,
-          picture: user.value?.picture,
-          sub: user.value?.sub
-        }
-      })
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Exchange token error:', errorText)
-      throw new Error('Errore durante lo scambio del token con Catalyst')
+    // Store user info for later use (optional)
+    if (user.value) {
+      localStorage.setItem('user_info', JSON.stringify(user.value))
     }
 
-    const data = await response.json()
-    console.log('Catalyst response:', data)
+    /** CATALYST TOKEN EXCHANGE - START */
+    // If you need to exchange token with Catalyst third-party auth, uncomment:
+    // const response = await fetch(`${CATALYST_BASE_URL}/exchange-auth0-token`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${accessToken}`
+    //   },
+    //   body: JSON.stringify({
+    //     auth0Token: accessToken,
+    //     userInfo: {
+    //       email: user.value?.email,
+    //       name: user.value?.name,
+    //       picture: user.value?.picture,
+    //       sub: user.value?.sub
+    //     }
+    //   })
+    // })
+    //
+    // if (!response.ok) {
+    //   const errorText = await response.text()
+    //   console.error('Exchange token error:', errorText)
+    //   throw new Error('Errore durante lo scambio del token con Catalyst')
+    // }
+    //
+    // const data = await response.json()
+    // console.log('Catalyst response:', data)
+    //
+    // // Store Catalyst token if provided
+    // if (data.token || data.catalystToken) {
+    //   localStorage.setItem('catalyst_token', data.token || data.catalystToken)
+    // }
+    /** CATALYST TOKEN EXCHANGE - END */
 
-    // Store Catalyst token if provided
-    if (data.token || data.catalystToken) {
-      localStorage.setItem('catalyst_token', data.token || data.catalystToken)
-    }
-
-    // Store user info if provided
-    if (data.user) {
-      localStorage.setItem('user_info', JSON.stringify(data.user))
-    }
-
-    // Redirect to home or dashboard
+    // Redirect to home
     router.push('/')
 
   } catch (err) {
