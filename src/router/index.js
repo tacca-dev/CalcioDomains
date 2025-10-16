@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import DomainsView from '../views/DomainsView.vue'
+import DashboardView from '../views/DashboardView.vue'
 // import AppRedirect from '../views/AppRedirect.vue'
 /** LOGIN AUTH0 - START */
 // import AuthCallback from '../views/AuthCallback.vue'
@@ -18,6 +19,11 @@ const router = createRouter({
       path: '/domains',
       name: 'domains',
       component: DomainsView
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView
     },
     /** CATALYST NATIVE AUTHENTICATION - START */
     // {

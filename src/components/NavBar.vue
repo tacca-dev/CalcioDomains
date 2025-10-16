@@ -29,13 +29,14 @@
           Login
         </button>
 
-        <!-- Show user info and logout when authenticated -->
-        <div v-else class="user-section">
-          <span class="user-email">{{ user?.email }}</span>
-          <button @click="logout" class="logout-button">
-            Logout
-          </button>
-        </div>
+        <!-- Show dashboard button when authenticated -->
+        <button
+          v-else
+          @click="$router.push('/dashboard')"
+          class="dashboard-button"
+        >
+          Dashboard
+        </button>
       </div>
     </div>
   </nav>
@@ -52,8 +53,6 @@ import { useAuth0 } from '@auth0/auth0-vue'
 // Get Auth0 functions and state
 const {
   loginWithRedirect,
-  logout: auth0Logout,
-  user,
   isAuthenticated,
   isLoading
 } = useAuth0()
@@ -63,16 +62,6 @@ const login = () => {
   loginWithRedirect({
     redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/'
   });
-}
-
-// Logout function
-const logout = () => {
-  const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
-  auth0Logout({
-    logoutParams: {
-      returnTo: returnToUrl
-    }
-  })
 }
 /** LOGIN AUTH0 - END */
 
@@ -202,6 +191,27 @@ const logout = () => {
 }
 
 .login-button:active {
+  background: #f3f4f6;
+}
+
+.dashboard-button {
+  background: white;
+  color: #1a1a1a;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboard-button:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.dashboard-button:active {
   background: #f3f4f6;
 }
 
