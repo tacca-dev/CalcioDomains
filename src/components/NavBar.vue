@@ -43,34 +43,88 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
-import { useAuth0 } from '@auth0/auth0-vue'
+import { ref, onMounted } from 'vue'
+import { isAuthenticated as checkAuth, getCurrentUser, signIn, signOut } from '../services/auth'
+
+/** LOGIN AUTH0 - START */
+// import { useAuth0 } from '@auth0/auth0-vue'
 
 // Get Auth0 functions and state
-const {
-  loginWithRedirect,
-  logout: auth0Logout,
-  user,
-  isAuthenticated,
-  isLoading
-} = useAuth0()
+// const {
+//   loginWithRedirect,
+//   logout: auth0Logout,
+//   user,
+//   isAuthenticated,
+//   isLoading
+// } = useAuth0()
+
+// Mock values when Auth0 is disabled
+// const user = { value: null }
+// const isAuthenticated = { value: false }
+// const isLoading = { value: false }
+
+// Login function
+// const login = () => {
+//   console.log('Login clicked - Auth0 disabled')
+//   // loginWithRedirect({
+//   //   redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
+//   // });
+// }
+
+// Logout function
+// const logout = () => {
+//   console.log('Logout clicked - Auth0 disabled')
+//   // const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
+//   // auth0Logout({
+//   //   logoutParams: {
+//   //     returnTo: returnToUrl
+//   //   }
+//   // })
+// }
+/** LOGIN AUTH0 - END */
+
+// Catalyst Native Authentication
+const user = ref(null)
+const isAuthenticated = ref(false)
+const isLoading = ref(true)
+
+// Check authentication status on mount
+onMounted(async () => {
+  try {
+    isLoading.value = true
+    const authenticated = await checkAuth()
+    isAuthenticated.value = authenticated
+
+    if (authenticated) {
+      const userDetails = await getCurrentUser()
+      user.value = userDetails
+    }
+  } catch (error) {
+    console.error('Error checking authentication:', error)
+  } finally {
+    isLoading.value = false
+  }
+})
 
 // Login function
 const login = () => {
-  loginWithRedirect({
-    redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
-  });
+  signIn()
+  // loginWithRedirect({
+  //   redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
+  // });
 }
 
 // Logout function
 const logout = () => {
-  const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
-
-  auth0Logout({
-    logoutParams: {
-      returnTo: returnToUrl
-    }
-  })
+  signOut()
+  // const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
+  // auth0Logout({
+  //   logoutParams: {
+  //     returnTo: returnToUrl
+  //   }
+  // })
 }
+/** LOGIN AUTH0 - END */
 </script>
 
 <style scoped>

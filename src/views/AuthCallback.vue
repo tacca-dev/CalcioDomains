@@ -1,3 +1,9 @@
+<!--
+/** LOGIN AUTH0 - START */
+Questo componente gestisce il callback di Auth0.
+Attualmente commentato e non in uso.
+/** LOGIN AUTH0 - END */
+-->
 <template>
   <div class="auth-callback-container">
     <div class="loading-card">
