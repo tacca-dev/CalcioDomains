@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import DomainsView from '../views/DomainsView.vue'
+import AppRedirect from '../views/AppRedirect.vue'
 /** LOGIN AUTH0 - START */
 // import AuthCallback from '../views/AuthCallback.vue'
 /** LOGIN AUTH0 - END */
@@ -17,6 +18,11 @@ const router = createRouter({
       path: '/domains',
       name: 'domains',
       component: DomainsView
+    },
+    {
+      path: '/app',
+      name: 'app-redirect',
+      component: AppRedirect
     },
     /** LOGIN AUTH0 - START */
     // {
