@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import DomainsView from '../views/DomainsView.vue'
-import AppRedirect from '../views/AppRedirect.vue'
+// import AppRedirect from '../views/AppRedirect.vue'
 /** LOGIN AUTH0 - START */
-// import AuthCallback from '../views/AuthCallback.vue'
+import AuthCallback from '../views/AuthCallback.vue'
 /** LOGIN AUTH0 - END */
 
 const router = createRouter({
@@ -19,17 +19,19 @@ const router = createRouter({
       name: 'domains',
       component: DomainsView
     },
-    {
-      path: '/app',
-      name: 'app-redirect',
-      component: AppRedirect
-    },
-    /** LOGIN AUTH0 - START */
+    /** CATALYST NATIVE AUTHENTICATION - START */
     // {
-    //   path: '/auth-callback',
-    //   name: 'auth-callback',
-    //   component: AuthCallback
+    //   path: '/app',
+    //   name: 'app-redirect',
+    //   component: AppRedirect
     // },
+    /** CATALYST NATIVE AUTHENTICATION - END */
+    /** LOGIN AUTH0 - START */
+    {
+      path: '/auth-callback',
+      name: 'auth-callback',
+      component: AuthCallback
+    },
     /** LOGIN AUTH0 - END */
     {
       path: '/about',

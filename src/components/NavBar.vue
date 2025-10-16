@@ -43,97 +43,81 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
-import { ref, onMounted } from 'vue'
-import { isAuthenticated as checkAuth, getCurrentUser, signIn, signOut } from '../services/auth'
+// import { ref, onMounted } from 'vue'
+// import { isAuthenticated as checkAuth, getCurrentUser, signIn, signOut } from '../services/auth'
 
 /** LOGIN AUTH0 - START */
-// import { useAuth0 } from '@auth0/auth0-vue'
+import { useAuth0 } from '@auth0/auth0-vue'
 
 // Get Auth0 functions and state
-// const {
-//   loginWithRedirect,
-//   logout: auth0Logout,
-//   user,
-//   isAuthenticated,
-//   isLoading
-// } = useAuth0()
-
-// Mock values when Auth0 is disabled
-// const user = { value: null }
-// const isAuthenticated = { value: false }
-// const isLoading = { value: false }
-
-// Login function
-// const login = () => {
-//   console.log('Login clicked - Auth0 disabled')
-//   // loginWithRedirect({
-//   //   redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
-//   // });
-// }
-
-// Logout function
-// const logout = () => {
-//   console.log('Logout clicked - Auth0 disabled')
-//   // const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
-//   // auth0Logout({
-//   //   logoutParams: {
-//   //     returnTo: returnToUrl
-//   //   }
-//   // })
-// }
-/** LOGIN AUTH0 - END */
-
-// Catalyst Native Authentication
-const user = ref(null)
-const isAuthenticated = ref(false)
-const isLoading = ref(true)
-
-// Check authentication status on mount
-onMounted(async () => {
-  console.log('[NavBar] Component mounted, checking authentication...')
-  try {
-    isLoading.value = true
-    console.log('[NavBar] Loading state set to true')
-
-    const authenticated = await checkAuth()
-    console.log('[NavBar] Authentication check result:', authenticated)
-    isAuthenticated.value = authenticated
-
-    if (authenticated) {
-      console.log('[NavBar] User is authenticated, fetching user details...')
-      const userDetails = await getCurrentUser()
-      console.log('[NavBar] User details received:', userDetails)
-      user.value = userDetails
-    } else {
-      console.log('[NavBar] User is not authenticated')
-    }
-  } catch (error) {
-    console.error('[NavBar] Error checking authentication:', error)
-  } finally {
-    isLoading.value = false
-    console.log('[NavBar] Loading complete. isAuthenticated:', isAuthenticated.value, 'user:', user.value)
-  }
-})
+const {
+  loginWithRedirect,
+  logout: auth0Logout,
+  user,
+  isAuthenticated,
+  isLoading
+} = useAuth0()
 
 // Login function
 const login = () => {
-  signIn()
-  // loginWithRedirect({
-  //   redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
-  // });
+  loginWithRedirect({
+    redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/auth-callback'
+  });
 }
 
 // Logout function
 const logout = () => {
-  signOut()
-  // const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
-  // auth0Logout({
-  //   logoutParams: {
-  //     returnTo: returnToUrl
-  //   }
-  // })
+  const returnToUrl = 'https://calciodomains-yqdhfgao.onslate.eu'
+  auth0Logout({
+    logoutParams: {
+      returnTo: returnToUrl
+    }
+  })
 }
 /** LOGIN AUTH0 - END */
+
+/** CATALYST NATIVE AUTHENTICATION - START */
+// const user = ref(null)
+// const isAuthenticated = ref(false)
+// const isLoading = ref(true)
+
+// // Check authentication status on mount
+// onMounted(async () => {
+//   console.log('[NavBar] Component mounted, checking authentication...')
+//   try {
+//     isLoading.value = true
+//     console.log('[NavBar] Loading state set to true')
+
+//     const authenticated = await checkAuth()
+//     console.log('[NavBar] Authentication check result:', authenticated)
+//     isAuthenticated.value = authenticated
+
+//     if (authenticated) {
+//       console.log('[NavBar] User is authenticated, fetching user details...')
+//       const userDetails = await getCurrentUser()
+//       console.log('[NavBar] User details received:', userDetails)
+//       user.value = userDetails
+//     } else {
+//       console.log('[NavBar] User is not authenticated')
+//     }
+//   } catch (error) {
+//     console.error('[NavBar] Error checking authentication:', error)
+//   } finally {
+//     isLoading.value = false
+//     console.log('[NavBar] Loading complete. isAuthenticated:', isAuthenticated.value, 'user:', user.value)
+//   }
+// })
+
+// // Login function
+// const login = () => {
+//   signIn()
+// }
+
+// // Logout function
+// const logout = () => {
+//   signOut()
+// }
+/** CATALYST NATIVE AUTHENTICATION - END */
 </script>
 
 <style scoped>
