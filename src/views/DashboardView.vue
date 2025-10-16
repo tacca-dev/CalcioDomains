@@ -64,40 +64,73 @@
       </div>
     </div>
 
-    <!-- Email Verification Banner -->
-    <div class="verification-banner">
-      <span class="banner-icon">ⓘ</span>
-      <div class="banner-content">
-        <strong>Conferma la tua email per accedere a tutte le funzionalità</strong>
-        <p>Puoi gestire il tuo profilo, ma per acquistare domini o ricariche devi prima confermare l'email.</p>
-      </div>
-      <button class="banner-action">✉ Invia Email Verifica</button>
-    </div>
-
     <!-- Action Tabs -->
     <div class="action-tabs">
-      <button class="tab-button active">I Miei Domini</button>
-      <button class="tab-button">I Miei Coupons</button>
-      <button class="tab-button">Operazioni</button>
-      <button class="tab-button primary">Cerca Nuovi Domini</button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'domini' }"
+        @click="activeTab = 'domini'"
+      >
+        I Miei Domini
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'coupons' }"
+        @click="activeTab = 'coupons'"
+      >
+        I Miei Coupons
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'operazioni' }"
+        @click="activeTab = 'operazioni'"
+      >
+        Operazioni
+      </button>
+      <button
+        class="tab-button primary"
+        @click="$router.push('/domains')"
+      >
+        Cerca Nuovi Domini
+      </button>
     </div>
 
-    <!-- Empty State -->
-    <div class="empty-state">
-      <div class="empty-icon">🔍</div>
-      <h2 class="empty-title">NESSUN DOMINIO BLOCKCHAIN TROVATO</h2>
-      <p class="empty-description">Non hai ancora acquistato nessun dominio blockchain .calcio</p>
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- I Miei Domini Tab -->
+      <div v-if="activeTab === 'domini'" class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h2 class="empty-title">NESSUN DOMINIO BLOCKCHAIN TROVATO</h2>
+        <p class="empty-description">Non hai ancora acquistato nessun dominio blockchain .calcio</p>
+      </div>
+
+      <!-- I Miei Coupons Tab -->
+      <div v-if="activeTab === 'coupons'" class="empty-state">
+        <div class="empty-icon">🎁</div>
+        <h2 class="empty-title">NESSUN COUPON DISPONIBILE</h2>
+        <p class="empty-description">Non hai ancora ricevuto nessun coupon sconto</p>
+      </div>
+
+      <!-- Operazioni Tab -->
+      <div v-if="activeTab === 'operazioni'" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h2 class="empty-title">NESSUNA OPERAZIONE REGISTRATA</h2>
+        <p class="empty-description">Non hai ancora effettuato nessuna operazione (acquisti, vendite, ricariche)</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 const router = useRouter()
 const { user, logout } = useAuth0()
+
+// Active tab state
+const activeTab = ref('domini')
 
 const userName = computed(() => {
   if (!user.value) return 'UTENTE'
