@@ -123,10 +123,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
-const router = useRouter()
 const { user, logout } = useAuth0()
 
 // Active tab state

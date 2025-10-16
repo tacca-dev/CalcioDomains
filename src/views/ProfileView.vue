@@ -152,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
 
