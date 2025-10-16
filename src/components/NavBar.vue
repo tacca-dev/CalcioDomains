@@ -90,19 +90,28 @@ const isLoading = ref(true)
 
 // Check authentication status on mount
 onMounted(async () => {
+  console.log('[NavBar] Component mounted, checking authentication...')
   try {
     isLoading.value = true
+    console.log('[NavBar] Loading state set to true')
+
     const authenticated = await checkAuth()
+    console.log('[NavBar] Authentication check result:', authenticated)
     isAuthenticated.value = authenticated
 
     if (authenticated) {
+      console.log('[NavBar] User is authenticated, fetching user details...')
       const userDetails = await getCurrentUser()
+      console.log('[NavBar] User details received:', userDetails)
       user.value = userDetails
+    } else {
+      console.log('[NavBar] User is not authenticated')
     }
   } catch (error) {
-    console.error('Error checking authentication:', error)
+    console.error('[NavBar] Error checking authentication:', error)
   } finally {
     isLoading.value = false
+    console.log('[NavBar] Loading complete. isAuthenticated:', isAuthenticated.value, 'user:', user.value)
   }
 })
 
