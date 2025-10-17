@@ -286,7 +286,7 @@ const handleSaveProfile = async () => {
       }
 
       const catalystResponse = await axios.post(
-        'https://calciodomains-20105566495.development.catalystserverless.eu/server/update_user_data_function',
+        'https://calciodomains-20105566495.development.catalystserverless.eu/server/update_user_data',
         catalystPayload
       )
 
