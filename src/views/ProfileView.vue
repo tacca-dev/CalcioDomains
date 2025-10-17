@@ -238,15 +238,34 @@ const handleSaveProfile = async () => {
     const token = await getAccessTokenSilently({
       authorizationParams: {
         audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
-        scope: 'update:current_user_metadata'
+        scope: 'read:current_user update:current_user_metadata'
       }
     })
 
-    // Update user metadata
+    // First, get current user metadata to get catalystRowId
+    const userResponse = await axios.get(
+      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    const currentMetadata = userResponse.data.user_metadata || {}
+    const catalystRowId = currentMetadata.catalystRowId
+
+    // Merge formData with existing metadata (keeping catalystRowId)
+    const updatedMetadata = {
+      ...currentMetadata,
+      ...formData.value
+    }
+
+    // Update Auth0 user metadata
     await axios.patch(
       `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
-        user_metadata: formData.value
+        user_metadata: updatedMetadata
       },
       {
         headers: {
@@ -255,6 +274,40 @@ const handleSaveProfile = async () => {
         }
       }
     )
+
+    console.log('✅ Auth0 metadata updated successfully')
+
+    // Update Catalyst datastore (only if catalystRowId exists)
+    if (catalystRowId) {
+      const catalystPayload = {
+        catalystRowId: catalystRowId,
+        name: user.value.name || user.value.nickname || '',
+        user_metadata: updatedMetadata
+      }
+
+      const catalystResponse = await axios.post(
+        'https://calciodomains-20105566495.development.catalystserverless.eu/server/update_user_data_function',
+        catalystPayload
+      )
+
+      // Parse Catalyst response
+      let catalystResult
+      if (catalystResponse.data.output) {
+        catalystResult = typeof catalystResponse.data.output === 'string'
+          ? JSON.parse(catalystResponse.data.output)
+          : catalystResponse.data.output
+      } else {
+        catalystResult = catalystResponse.data
+      }
+
+      if (catalystResult.success) {
+        console.log('✅ Catalyst datastore updated successfully')
+      } else {
+        console.error('⚠️ Catalyst update failed:', catalystResult.error)
+      }
+    } else {
+      console.warn('⚠️ No catalystRowId found, skipping Catalyst update')
+    }
 
     successMessage.value = 'Profilo aggiornato con successo!'
 
