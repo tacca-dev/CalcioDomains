@@ -198,7 +198,7 @@ const loadUserMetadata = async () => {
 
     // 2. Fetch user data from Catalyst DB
     const catalystResponse = await axios.post(
-      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get_user_data',
+      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get-user-data',
       { catalystRowId }
     )
 
@@ -224,7 +224,7 @@ const loadUserMetadata = async () => {
 
     // 4. Load avatar if exists
     if (userData.avatar_file_id) {
-      currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get_avatar?rowId=${catalystRowId}&t=${Date.now()}`
+      currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
     }
 
   } catch (err) {
@@ -323,9 +323,9 @@ const handleSaveProfile = async () => {
       formDataToSend.append('avatar', formData.value.avatar)
     }
 
-    // 3. Send to Catalyst update_user (advancedIO)
+    // 3. Send to Catalyst update-user (advancedIO)
     const updateResponse = await axios.post(
-      'https://calciodomains-20105566495.development.catalystserverless.eu/server/update_user_catalyst',
+      'https://calciodomains-20105566495.development.catalystserverless.eu/server/update-user',
       formDataToSend,
       {
         headers: {

@@ -182,7 +182,7 @@ const loadUserData = async () => {
 
     // 2. Fetch user data from Catalyst
     const catalystResponse = await axios.post(
-      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get_user_data',
+      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get-user-data',
       { catalystRowId }
     )
 
@@ -201,7 +201,7 @@ const loadUserData = async () => {
 
       // Set avatar if exists
       if (userData.avatar_file_id) {
-        userAvatar.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get_avatar?rowId=${catalystRowId}&t=${Date.now()}`
+        userAvatar.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
       }
     }
 
