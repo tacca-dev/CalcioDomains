@@ -430,9 +430,10 @@ onMounted(() => {
 
 .page-title {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 0.25rem 0;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
@@ -528,10 +529,10 @@ onMounted(() => {
 
 .section-title {
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 0.5rem 0;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.01em;
 }
 
 .section-description {

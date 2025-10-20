@@ -256,14 +256,16 @@ async function handleSearch() {
 
 .domains-heading {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-heading);
+  letter-spacing: -0.01em;
 }
 
 .domains-text {
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--color-text);
+  font-weight: 400;
 }
 
 .domains-form {
@@ -344,9 +346,10 @@ async function handleSearch() {
 
 .result-title {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 1rem 0;
   color: var(--color-heading);
+  letter-spacing: -0.005em;
 }
 
 .result-subtitle {
