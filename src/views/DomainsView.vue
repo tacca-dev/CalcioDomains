@@ -382,9 +382,10 @@ async function handleSearch() {
 
 .suggestions-title {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 1rem 0;
   color: var(--color-heading);
+  letter-spacing: -0.005em;
 }
 
 .loading-spinner {
@@ -447,7 +448,7 @@ async function handleSearch() {
 }
 
 .suggestion-price {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-heading);
 }
 
@@ -464,9 +465,10 @@ async function handleSearch() {
 
 .api-response-title {
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 1rem 0;
   color: var(--color-heading);
+  letter-spacing: -0.005em;
 }
 
 .api-response-content {
