@@ -283,9 +283,10 @@ onMounted(() => {
 
 .greeting {
   font-size: 1.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 0.25rem 0;
+  letter-spacing: -0.01em;
 }
 
 .subtitle {
@@ -350,17 +351,18 @@ onMounted(() => {
 
 .stat-label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #6b7280;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .stat-value {
   font-size: 1.875rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.01em;
 }
 
 .stat-description {
