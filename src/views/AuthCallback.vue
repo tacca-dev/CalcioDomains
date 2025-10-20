@@ -137,7 +137,8 @@ const goHome = () => {
   font-size: 1.5rem;
   color: #1a1a1a;
   margin-bottom: 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.005em;
 }
 
 .loading-content p,
