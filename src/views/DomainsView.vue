@@ -67,10 +67,12 @@ async function handleSearch() {
       try {
         const mainResult = await searchDomains([mainDomain])
         freenameApiResponse.value = mainResult // Store full API response
-        const exactMatches = mainResult.data.result.find(r => r.type === 'EXACT_MATCH')
+        const exactMatches = mainResult.data.result.find((r) => r.type === 'EXACT_MATCH')
 
         if (exactMatches) {
-          const domainData = exactMatches.elements.find(el => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === mainDomain)
+          const domainData = exactMatches.elements.find(
+            (el) => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === mainDomain
+          )
 
           if (domainData) {
             const category = evaluation.category.toLowerCase()
@@ -100,9 +102,9 @@ async function handleSearch() {
     const suggestions = []
 
     // Filter out reserved suggestions and build domains array
-    const nonReservedSuggestions = evaluation.suggestions.filter(s => s.category !== 'Riservato')
-    const reservedSuggestions = evaluation.suggestions.filter(s => s.category === 'Riservato')
-    const suggestedDomains = nonReservedSuggestions.map(s => `${s.domain}.calcio`)
+    const nonReservedSuggestions = evaluation.suggestions.filter((s) => s.category !== 'Riservato')
+    const reservedSuggestions = evaluation.suggestions.filter((s) => s.category === 'Riservato')
+    const suggestedDomains = nonReservedSuggestions.map((s) => `${s.domain}.calcio`)
 
     const batchSize = 5
 
@@ -111,16 +113,20 @@ async function handleSearch() {
 
       try {
         const batchResult = await searchDomains(batch)
-        const exactMatches = batchResult.data.result.find(r => r.type === 'EXACT_MATCH')
+        const exactMatches = batchResult.data.result.find((r) => r.type === 'EXACT_MATCH')
 
         if (exactMatches) {
-          batch.forEach(domain => {
-            const domainData = exactMatches.elements.find(el => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === domain)
+          batch.forEach((domain) => {
+            const domainData = exactMatches.elements.find(
+              (el) => el.type === 'SECOND_LEVEL_DOMAIN' && el.name === domain
+            )
 
             if (domainData) {
               // Find the suggestion data by domain name
               const domainWithoutTld = domain.replace('.calcio', '')
-              const suggestionData = nonReservedSuggestions.find(s => s.domain === domainWithoutTld)
+              const suggestionData = nonReservedSuggestions.find(
+                (s) => s.domain === domainWithoutTld
+              )
               const category = (suggestionData?.category || evaluation.category).toLowerCase()
               const coefficient = coefficients.value[category] || 1
 
@@ -139,7 +145,7 @@ async function handleSearch() {
     }
 
     // Add reserved suggestions to the list (without price)
-    reservedSuggestions.forEach(s => {
+    reservedSuggestions.forEach((s) => {
       suggestions.push({
         domain: `${s.domain}.calcio`,
         available: false,
@@ -150,7 +156,6 @@ async function handleSearch() {
 
     suggestionsResults.value = suggestions
     loadingSuggestions.value = false
-
   } catch (err) {
     error.value = 'Errore durante la ricerca del dominio'
     console.error(err)
@@ -231,11 +236,18 @@ async function handleSearch() {
       </div>
 
       <!-- API Response (Freename or GPT based on domain status) -->
-      <div v-if="mainDomainResult && (mainDomainResult.reserved ? gptApiResponse : freenameApiResponse)" class="api-response-section">
+      <div
+        v-if="
+          mainDomainResult && (mainDomainResult.reserved ? gptApiResponse : freenameApiResponse)
+        "
+        class="api-response-section"
+      >
         <h3 class="api-response-title">
           {{ mainDomainResult.reserved ? 'Risposta AI' : 'Risposta API Freename' }}
         </h3>
-        <pre class="api-response-content">{{ JSON.stringify(mainDomainResult.reserved ? gptApiResponse : freenameApiResponse, null, 2) }}</pre>
+        <pre class="api-response-content">{{
+          JSON.stringify(mainDomainResult.reserved ? gptApiResponse : freenameApiResponse, null, 2)
+        }}</pre>
       </div>
     </div>
   </section>
@@ -406,7 +418,9 @@ async function handleSearch() {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-spinner p {

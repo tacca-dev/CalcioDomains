@@ -5,15 +5,14 @@
         Domini Blockchain <span class="highlight">.calcio</span> per Veri VISIONARI
       </h1>
       <p class="hero-subtitle">
-        La prima piattaforma che unisce passione calcistica e tecnologia blockchain.
-        Crea la tua community, coinvolgi i fan, costruisci il futuro.
+        La prima piattaforma che unisce passione calcistica e tecnologia blockchain. Crea la tua
+        community, coinvolgi i fan, costruisci il futuro.
       </p>
     </div>
   </main>
 </template>
 
-<script setup>
-</script>
+<script setup></script>
 
 <style scoped>
 .home-container {

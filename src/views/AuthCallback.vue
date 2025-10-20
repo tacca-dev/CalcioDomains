@@ -16,9 +16,7 @@ Attualmente commentato e non in uso.
       <div v-else class="error-content">
         <h2>Errore di autenticazione</h2>
         <p>{{ error }}</p>
-        <button @click="goHome" class="home-button">
-          Torna alla Home
-        </button>
+        <button @click="goHome" class="home-button">Torna alla Home</button>
       </div>
     </div>
   </div>
@@ -45,7 +43,7 @@ onMounted(async () => {
     console.log('Waiting for Auth0 to complete authentication...')
 
     // Wait a bit for Auth0 SDK to process the callback
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     // Check if authenticated
     if (!isAuthenticated.value) {
@@ -101,10 +99,9 @@ onMounted(async () => {
 
     // Redirect to home
     router.push('/')
-
   } catch (err) {
     console.error('Auth callback error:', err)
-    error.value = err.message || 'Si è verificato un errore durante l\'autenticazione'
+    error.value = err.message || "Si è verificato un errore durante l'autenticazione"
   }
 })
 

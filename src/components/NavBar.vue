@@ -2,39 +2,21 @@
   <nav class="navbar">
     <div class="navbar-container">
       <div class="navbar-left">
-        <router-link to="/" class="nav-brand">
-          CalcioDomains
-        </router-link>
+        <router-link to="/" class="nav-brand"> CalcioDomains </router-link>
         <div class="nav-links">
-          <router-link to="/" class="nav-link" active-class="active">
-            Home
-          </router-link>
-          <router-link to="/domains" class="nav-link" active-class="active">
-            Domini
-          </router-link>
+          <router-link to="/" class="nav-link" active-class="active"> Home </router-link>
+          <router-link to="/domains" class="nav-link" active-class="active"> Domini </router-link>
         </div>
       </div>
       <div class="navbar-right">
         <!-- Show loading state -->
-        <div v-if="isLoading" class="loading-text">
-          Caricamento...
-        </div>
+        <div v-if="isLoading" class="loading-text">Caricamento...</div>
 
         <!-- Show login button when not authenticated -->
-        <button
-          v-else-if="!isAuthenticated"
-          @click="login"
-          class="login-button"
-        >
-          Login
-        </button>
+        <button v-else-if="!isAuthenticated" @click="login" class="login-button">Login</button>
 
         <!-- Show dashboard button when authenticated -->
-        <button
-          v-else
-          @click="$router.push('/dashboard')"
-          class="dashboard-button"
-        >
+        <button v-else @click="$router.push('/dashboard')" class="dashboard-button">
           Dashboard
         </button>
       </div>
@@ -51,17 +33,13 @@ import { RouterLink } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 // Get Auth0 functions and state
-const {
-  loginWithRedirect,
-  isAuthenticated,
-  isLoading
-} = useAuth0()
+const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0()
 
 // Login function
 const login = () => {
   loginWithRedirect({
     redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/'
-  });
+  })
 }
 /** LOGIN AUTH0 - END */
 

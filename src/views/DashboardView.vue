@@ -4,12 +4,7 @@
     <div class="dashboard-header">
       <div class="header-user">
         <div class="user-avatar-container">
-          <img
-            v-if="userAvatar"
-            :src="userAvatar"
-            alt="Avatar"
-            class="user-avatar"
-          />
+          <img v-if="userAvatar" :src="userAvatar" alt="Avatar" class="user-avatar" />
           <div v-else class="user-avatar-placeholder">
             <span class="avatar-placeholder-icon">👤</span>
           </div>
@@ -102,10 +97,7 @@
       >
         Operazioni
       </button>
-      <button
-        class="tab-button primary"
-        @click="$router.push('/domains')"
-      >
+      <button class="tab-button primary" @click="$router.push('/domains')">
         Cerca Nuovi Domini
       </button>
     </div>
@@ -130,7 +122,9 @@
       <div v-if="activeTab === 'operazioni'" class="empty-state">
         <div class="empty-icon">📋</div>
         <h2 class="empty-title">NESSUNA OPERAZIONE REGISTRATA</h2>
-        <p class="empty-description">Non hai ancora effettuato nessuna operazione (acquisti, vendite, ricariche)</p>
+        <p class="empty-description">
+          Non hai ancora effettuato nessuna operazione (acquisti, vendite, ricariche)
+        </p>
       </div>
     </div>
   </div>
@@ -176,7 +170,12 @@ const loadUserData = async () => {
 
     if (!catalystRowId) {
       console.warn('catalystRowId non trovato, uso dati Auth0 come fallback')
-      userName.value = (user.value.name || user.value.nickname || user.value.email || 'UTENTE').toUpperCase()
+      userName.value = (
+        user.value.name ||
+        user.value.nickname ||
+        user.value.email ||
+        'UTENTE'
+      ).toUpperCase()
       return
     }
 
@@ -188,28 +187,37 @@ const loadUserData = async () => {
 
     // Parse response
     const parsedData = catalystResponse.data.output
-      ? (typeof catalystResponse.data.output === 'string'
-          ? JSON.parse(catalystResponse.data.output)
-          : catalystResponse.data.output)
+      ? typeof catalystResponse.data.output === 'string'
+        ? JSON.parse(catalystResponse.data.output)
+        : catalystResponse.data.output
       : catalystResponse.data
 
     if (parsedData.success && parsedData.data) {
       const userData = parsedData.data
 
       // Set user name
-      userName.value = (userData.name || userData.nickname || user.value.email || 'UTENTE').toUpperCase()
+      userName.value = (
+        userData.name ||
+        userData.nickname ||
+        user.value.email ||
+        'UTENTE'
+      ).toUpperCase()
 
       // Set avatar if exists
       if (userData.avatar_file_id) {
         userAvatar.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
       }
     }
-
   } catch (err) {
     console.error('Error loading user data:', err)
     // Fallback to Auth0 data
     if (user.value) {
-      userName.value = (user.value.name || user.value.nickname || user.value.email || 'UTENTE').toUpperCase()
+      userName.value = (
+        user.value.name ||
+        user.value.nickname ||
+        user.value.email ||
+        'UTENTE'
+      ).toUpperCase()
     }
   }
 }

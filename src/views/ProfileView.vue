@@ -120,11 +120,7 @@
             >
               Annulla
             </button>
-            <button
-              type="submit"
-              class="button button-primary"
-              :disabled="isSaving"
-            >
+            <button type="submit" class="button button-primary" :disabled="isSaving">
               <span v-if="isSaving">Salvataggio...</span>
               <span v-else>Salva Modifiche</span>
             </button>
@@ -204,9 +200,9 @@ const loadUserMetadata = async () => {
 
     // Parse response (Catalyst wraps in "output")
     const parsedData = catalystResponse.data.output
-      ? (typeof catalystResponse.data.output === 'string'
-          ? JSON.parse(catalystResponse.data.output)
-          : catalystResponse.data.output)
+      ? typeof catalystResponse.data.output === 'string'
+        ? JSON.parse(catalystResponse.data.output)
+        : catalystResponse.data.output
       : catalystResponse.data
 
     if (!parsedData.success) {
@@ -226,10 +222,10 @@ const loadUserMetadata = async () => {
     if (userData.avatar_file_id) {
       currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
     }
-
   } catch (err) {
     console.error('Error loading user data:', err)
-    error.value = err.response?.data?.error || err.message || 'Impossibile caricare i dati del profilo'
+    error.value =
+      err.response?.data?.error || err.message || 'Impossibile caricare i dati del profilo'
   } finally {
     isLoading.value = false
   }
@@ -362,7 +358,6 @@ const handleSaveProfile = async () => {
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
-
   } catch (err) {
     console.error('Error updating profile:', err)
     error.value = err.response?.data?.error || err.message || 'Impossibile salvare le modifiche'
@@ -462,7 +457,9 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error Banner */
