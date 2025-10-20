@@ -136,8 +136,9 @@ const login = () => {
 .nav-brand {
   text-decoration: none;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
+  letter-spacing: -0.01em;
 }
 
 .nav-brand:hover {
@@ -156,6 +157,7 @@ const login = () => {
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
   transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .nav-link:hover {
@@ -179,10 +181,11 @@ const login = () => {
   border: 1px solid #e5e7eb;
   padding: 0.5rem 1rem;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  letter-spacing: 0.2px;
 }
 
 .login-button:hover {
@@ -200,10 +203,11 @@ const login = () => {
   border: 1px solid #e5e7eb;
   padding: 0.5rem 1rem;
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  letter-spacing: 0.2px;
 }
 
 .dashboard-button:hover {

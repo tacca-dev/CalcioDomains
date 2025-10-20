@@ -35,20 +35,25 @@
   line-height: 1.2;
   margin-bottom: 1.5rem;
   color: #1a1a1a;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums;
 }
 
 .highlight {
   color: #4b5563;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .hero-subtitle {
   font-size: 1.125rem;
   color: #6b7280;
-  line-height: 1.6;
+  line-height: 1.7;
   max-width: 600px;
   margin: 0 auto;
+  font-weight: 400;
+  letter-spacing: 0.3px;
 }
 
 /* Mobile responsiveness */
