@@ -7,7 +7,7 @@
         Torna alla Dashboard
       </button>
       <h1 class="page-title">PROFILO UTENTE</h1>
-      <p class="subtitle">Visualizza e modifica le tue informazioni personali</p>
+      <p class="subtitle">Gestisci il tuo profilo e personalizza la tua esperienza</p>
     </div>
 
     <!-- Loading State -->
@@ -27,97 +27,87 @@
 
     <!-- Profile Content -->
     <div v-else class="profile-content">
-      <!-- Read-only Auth0 Info -->
-      <div class="info-section">
-        <h2 class="section-title">INFORMAZIONI ACCOUNT</h2>
-        <p class="section-description">Questi dati sono gestiti da Auth0 e non possono essere modificati da qui</p>
-
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Email</label>
-            <div class="info-value">{{ user?.email || 'Non disponibile' }}</div>
-            <span v-if="user?.email_verified" class="verified-badge">✓ Verificata</span>
-            <span v-else class="unverified-badge">✗ Non verificata</span>
-          </div>
-
-          <div class="info-item">
-            <label>Nome</label>
-            <div class="info-value">{{ user?.name || 'Non disponibile' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Nickname</label>
-            <div class="info-value">{{ user?.nickname || 'Non disponibile' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Ultimo Accesso</label>
-            <div class="info-value">{{ formatDate(user?.updated_at) }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Editable User Metadata -->
+      <!-- Editable User Profile -->
       <div class="edit-section">
-        <h2 class="section-title">INFORMAZIONI PERSONALIZZATE</h2>
-        <p class="section-description">Questi campi puoi modificarli liberamente</p>
+        <h2 class="section-title">INFORMAZIONI PROFILO</h2>
+        <p class="section-description">Personalizza il tuo profilo pubblico</p>
 
         <form @submit.prevent="handleSaveProfile" class="edit-form">
-          <div class="form-group">
-            <label for="firstName">Nome</label>
+          <!-- Avatar Upload -->
+          <div class="form-group avatar-group">
+            <label>Avatar</label>
+
+            <!-- Preview -->
+            <div class="avatar-preview-container">
+              <div class="avatar-preview">
+                <img
+                  v-if="avatarPreview || currentAvatarUrl"
+                  :src="avatarPreview || currentAvatarUrl"
+                  alt="Avatar preview"
+                  class="avatar-image"
+                />
+                <div v-else class="avatar-placeholder">
+                  <span class="avatar-placeholder-icon">👤</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input file -->
             <input
-              id="firstName"
-              v-model="formData.firstName"
+              id="avatar"
+              type="file"
+              accept="image/jpeg,image/png"
+              @change="handleFileChange"
+              class="file-input"
+              ref="fileInput"
+            />
+
+            <div class="file-hints">
+              <p>📐 Dimensioni consigliate: 200x200px</p>
+              <p>📁 Formati supportati: JPEG, PNG (max 5MB)</p>
+              <p>🔄 L'immagine verrà ridimensionata automaticamente</p>
+            </div>
+
+            <button
+              v-if="avatarPreview"
+              type="button"
+              class="button button-remove"
+              @click="removeAvatar"
+            >
+              Rimuovi nuova immagine
+            </button>
+          </div>
+
+          <!-- Nome visualizzato -->
+          <div class="form-group">
+            <label for="displayName">Nome Visualizzato *</label>
+            <input
+              id="displayName"
+              v-model="formData.name"
               type="text"
-              placeholder="Inserisci il tuo nome"
+              placeholder="Es: Mario Rossi"
               class="form-input"
+              required
             />
+            <span class="field-hint">Questo è il nome che verrà mostrato agli altri utenti</span>
           </div>
 
+          <!-- Nickname (univoco) -->
           <div class="form-group">
-            <label for="lastName">Cognome</label>
+            <label for="nickname">Nickname *</label>
             <input
-              id="lastName"
-              v-model="formData.lastName"
+              id="nickname"
+              v-model="formData.nickname"
               type="text"
-              placeholder="Inserisci il tuo cognome"
+              placeholder="Es: mariorossi"
               class="form-input"
+              required
+              pattern="^[a-zA-Z0-9_-]{3,20}$"
             />
-          </div>
-
-          <div class="form-group">
-            <label for="phone">Telefono</label>
-            <input
-              id="phone"
-              v-model="formData.phone"
-              type="tel"
-              placeholder="+39 123 456 7890"
-              class="form-input"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="company">Azienda (opzionale)</label>
-            <input
-              id="company"
-              v-model="formData.company"
-              type="text"
-              placeholder="Nome azienda"
-              class="form-input"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="country">Paese</label>
-            <select id="country" v-model="formData.country" class="form-input">
-              <option value="">Seleziona paese</option>
-              <option value="IT">Italia</option>
-              <option value="CH">Svizzera</option>
-              <option value="FR">Francia</option>
-              <option value="DE">Germania</option>
-              <option value="ES">Spagna</option>
-              <option value="other">Altro</option>
-            </select>
+            <span class="field-hint unique-hint">
+              ⚠️ Deve essere univoco (3-20 caratteri, solo lettere, numeri, _ e -)
+            </span>
+            <span v-if="nicknameError" class="error-hint">{{ nicknameError }}</span>
           </div>
 
           <!-- Action Buttons -->
@@ -163,36 +153,27 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref(null)
 const successMessage = ref('')
+const nicknameError = ref('')
 
-// Form data
+// Form data - nuovo formato
 const formData = ref({
-  firstName: '',
-  lastName: '',
-  phone: '',
-  company: '',
-  country: ''
+  name: '',
+  nickname: '',
+  avatar: null
 })
 
-// Format date helper
-const formatDate = (dateString) => {
-  if (!dateString) return 'Non disponibile'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('it-IT', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+// Avatar state
+const avatarPreview = ref(null)
+const currentAvatarUrl = ref(null)
+const fileInput = ref(null)
 
-// Load user metadata
+// Load user data from Catalyst
 const loadUserMetadata = async () => {
   try {
     isLoading.value = true
     error.value = null
 
-    // Get Management API token
+    // 1. Get catalystRowId from Auth0 (SOLO questo!)
     const token = await getAccessTokenSilently({
       authorizationParams: {
         audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
@@ -200,8 +181,7 @@ const loadUserMetadata = async () => {
       }
     })
 
-    // Fetch full user profile with metadata
-    const response = await axios.get(
+    const auth0Response = await axios.get(
       `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
@@ -210,40 +190,115 @@ const loadUserMetadata = async () => {
       }
     )
 
-    // Load existing metadata into form
-    const metadata = response.data.user_metadata || {}
-    formData.value = {
-      firstName: metadata.firstName || '',
-      lastName: metadata.lastName || '',
-      phone: metadata.phone || '',
-      company: metadata.company || '',
-      country: metadata.country || ''
+    const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
+
+    if (!catalystRowId) {
+      throw new Error('catalystRowId non trovato in Auth0. Contatta il supporto.')
     }
+
+    // 2. Fetch user data from Catalyst DB
+    const catalystResponse = await axios.post(
+      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get_user_data',
+      { catalystRowId }
+    )
+
+    // Parse response (Catalyst wraps in "output")
+    const parsedData = catalystResponse.data.output
+      ? (typeof catalystResponse.data.output === 'string'
+          ? JSON.parse(catalystResponse.data.output)
+          : catalystResponse.data.output)
+      : catalystResponse.data
+
+    if (!parsedData.success) {
+      throw new Error(parsedData.error || 'Errore nel caricamento dati')
+    }
+
+    const userData = parsedData.data
+
+    // 3. Populate form with Catalyst data
+    formData.value = {
+      name: userData.name || '',
+      nickname: userData.nickname || '',
+      avatar: null
+    }
+
+    // 4. Load avatar if exists
+    if (userData.avatar_file_id) {
+      currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get_avatar?rowId=${catalystRowId}&t=${Date.now()}`
+    }
+
   } catch (err) {
-    console.error('Error loading user metadata:', err)
-    error.value = err.response?.data?.message || 'Impossibile caricare i dati del profilo'
+    console.error('Error loading user data:', err)
+    error.value = err.response?.data?.error || err.message || 'Impossibile caricare i dati del profilo'
   } finally {
     isLoading.value = false
   }
 }
 
-// Update user profile
+// Handle file change (avatar upload)
+const handleFileChange = (event) => {
+  const file = event.target.files[0]
+
+  if (!file) return
+
+  // Validazione tipo file
+  const validTypes = ['image/jpeg', 'image/png']
+  if (!validTypes.includes(file.type)) {
+    error.value = 'Formato file non valido. Usa JPEG o PNG.'
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+    return
+  }
+
+  // Validazione dimensione (max 5MB)
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (file.size > maxSize) {
+    error.value = 'File troppo grande. Dimensione massima: 5MB.'
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+    return
+  }
+
+  // Salva file
+  formData.value.avatar = file
+  error.value = null
+
+  // Crea preview
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    avatarPreview.value = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+// Remove avatar preview
+const removeAvatar = () => {
+  formData.value.avatar = null
+  avatarPreview.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
+// Update user profile - NEW LOGIC
 const handleSaveProfile = async () => {
   try {
     isSaving.value = true
     error.value = null
     successMessage.value = ''
+    nicknameError.value = ''
 
-    // Get Management API token with update scope
+    // 1. Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
         audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
-        scope: 'read:current_user update:current_user_metadata'
+        scope: 'read:current_user'
       }
     })
 
-    // First, get current user metadata to get catalystRowId
-    const userResponse = await axios.get(
+    const auth0Response = await axios.get(
       `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
@@ -252,82 +307,81 @@ const handleSaveProfile = async () => {
       }
     )
 
-    const currentMetadata = userResponse.data.user_metadata || {}
-    const catalystRowId = currentMetadata.catalystRowId
+    const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
 
-    // Merge formData with existing metadata (keeping catalystRowId)
-    const updatedMetadata = {
-      ...currentMetadata,
-      ...formData.value
+    if (!catalystRowId) {
+      throw new Error('catalystRowId non trovato. Contatta il supporto.')
     }
 
-    // Update Auth0 user metadata
-    await axios.patch(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
-      {
-        user_metadata: updatedMetadata
-      },
+    // 2. Prepare FormData for file upload
+    const formDataToSend = new FormData()
+    formDataToSend.append('catalystRowId', catalystRowId)
+    formDataToSend.append('name', formData.value.name)
+    formDataToSend.append('nickname', formData.value.nickname)
+
+    if (formData.value.avatar) {
+      formDataToSend.append('avatar', formData.value.avatar)
+    }
+
+    // 3. Send to Catalyst update_user (advancedIO)
+    const updateResponse = await axios.post(
+      'https://calciodomains-20105566495.development.catalystserverless.eu/server/update_user_catalyst',
+      formDataToSend,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'multipart/form-data'
         }
       }
     )
 
-    console.log('✅ Auth0 metadata updated successfully')
+    // Parse response
+    const result = updateResponse.data
 
-    // Update Catalyst datastore (only if catalystRowId exists)
-    if (catalystRowId) {
-      const catalystPayload = {
-        catalystRowId: catalystRowId,
-        name: user.value.name || user.value.nickname || '',
-        user_metadata: updatedMetadata
+    if (!result.success) {
+      // Check se errore è nickname già esistente
+      if (result.error && result.error.includes('nickname')) {
+        nicknameError.value = 'Questo nickname è già in uso. Scegline un altro.'
+        return
       }
-
-      const catalystResponse = await axios.post(
-        'https://calciodomains-20105566495.development.catalystserverless.eu/server/update_user_data',
-        catalystPayload
-      )
-
-      // Parse Catalyst response
-      let catalystResult
-      if (catalystResponse.data.output) {
-        catalystResult = typeof catalystResponse.data.output === 'string'
-          ? JSON.parse(catalystResponse.data.output)
-          : catalystResponse.data.output
-      } else {
-        catalystResult = catalystResponse.data
-      }
-
-      if (catalystResult.success) {
-        console.log('✅ Catalyst datastore updated successfully')
-      } else {
-        console.error('⚠️ Catalyst update failed:', catalystResult.error)
-      }
-    } else {
-      console.warn('⚠️ No catalystRowId found, skipping Catalyst update')
+      throw new Error(result.error || 'Errore durante aggiornamento')
     }
 
     successMessage.value = 'Profilo aggiornato con successo!'
+
+    // Refresh avatar preview se caricato
+    if (result.data && result.data.avatar_url) {
+      currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu${result.data.avatar_url}&t=${Date.now()}`
+      avatarPreview.value = null
+      formData.value.avatar = null
+      if (fileInput.value) {
+        fileInput.value.value = ''
+      }
+    }
 
     // Hide success message after 3 seconds
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
+
   } catch (err) {
     console.error('Error updating profile:', err)
-    error.value = err.response?.data?.message || 'Impossibile salvare le modifiche'
+    error.value = err.response?.data?.error || err.message || 'Impossibile salvare le modifiche'
   } finally {
     isSaving.value = false
   }
 }
 
-// Reset form to original metadata values
+// Reset form to original values
 const resetForm = () => {
   loadUserMetadata()
+  avatarPreview.value = null
+  nicknameError.value = ''
   successMessage.value = ''
   error.value = null
+
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
 }
 
 // Load metadata on mount
@@ -571,6 +625,133 @@ onMounted(() => {
 
 .form-input::placeholder {
   color: #9ca3af;
+}
+
+/* Field hints */
+.field-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.unique-hint {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.error-hint {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: block;
+  font-weight: 500;
+}
+
+/* Avatar Upload */
+.avatar-group {
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.avatar-preview-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.avatar-preview {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #e5e7eb;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+}
+
+.avatar-placeholder-icon {
+  font-size: 4rem;
+  opacity: 0.3;
+}
+
+/* File input */
+.file-input {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  background: white;
+}
+
+.file-input:hover {
+  border-color: #1a1a1a;
+  background: #fafafa;
+}
+
+.file-input::-webkit-file-upload-button {
+  padding: 0.5rem 1rem;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-right: 1rem;
+}
+
+.file-input::-webkit-file-upload-button:hover {
+  background: #000000;
+}
+
+.file-hints {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.file-hints p {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.button-remove {
+  background: #ef4444;
+  color: white;
+  margin-top: 0.75rem;
+  width: 100%;
+  border: none;
+}
+
+.button-remove:hover:not(:disabled) {
+  background: #dc2626;
 }
 
 /* Form Actions */

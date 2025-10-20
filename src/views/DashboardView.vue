@@ -2,8 +2,23 @@
   <div class="dashboard-container">
     <!-- Header with greeting -->
     <div class="dashboard-header">
-      <h1 class="greeting">CIAO, {{ userName }}</h1>
-      <p class="subtitle">Gestisci i tuoi domini blockchain .calcio</p>
+      <div class="header-user">
+        <div class="user-avatar-container">
+          <img
+            v-if="userAvatar"
+            :src="userAvatar"
+            alt="Avatar"
+            class="user-avatar"
+          />
+          <div v-else class="user-avatar-placeholder">
+            <span class="avatar-placeholder-icon">👤</span>
+          </div>
+        </div>
+        <div class="user-info">
+          <h1 class="greeting">CIAO, {{ userName }}</h1>
+          <p class="subtitle">Gestisci i tuoi domini blockchain .calcio</p>
+        </div>
+      </div>
 
       <div class="header-actions">
         <button class="action-button" @click="$router.push('/profile')">
@@ -122,19 +137,82 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
+import axios from 'axios'
 
-const { user, logout } = useAuth0()
+const { user, getAccessTokenSilently, logout } = useAuth0()
 
 // Active tab state
 const activeTab = ref('domini')
 
-const userName = computed(() => {
-  if (!user.value) return 'UTENTE'
-  const name = user.value.name || user.value.nickname || user.value.email
-  return name.toUpperCase()
-})
+// User data from Catalyst
+const userName = ref('UTENTE')
+const userAvatar = ref(null)
+
+// Load user data from Catalyst
+const loadUserData = async () => {
+  try {
+    if (!user.value) return
+
+    // 1. Get catalystRowId from Auth0
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        scope: 'read:current_user'
+      }
+    })
+
+    const auth0Response = await axios.get(
+      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
+
+    if (!catalystRowId) {
+      console.warn('catalystRowId non trovato, uso dati Auth0 come fallback')
+      userName.value = (user.value.name || user.value.nickname || user.value.email || 'UTENTE').toUpperCase()
+      return
+    }
+
+    // 2. Fetch user data from Catalyst
+    const catalystResponse = await axios.post(
+      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get_user_data',
+      { catalystRowId }
+    )
+
+    // Parse response
+    const parsedData = catalystResponse.data.output
+      ? (typeof catalystResponse.data.output === 'string'
+          ? JSON.parse(catalystResponse.data.output)
+          : catalystResponse.data.output)
+      : catalystResponse.data
+
+    if (parsedData.success && parsedData.data) {
+      const userData = parsedData.data
+
+      // Set user name
+      userName.value = (userData.name || userData.nickname || user.value.email || 'UTENTE').toUpperCase()
+
+      // Set avatar if exists
+      if (userData.avatar_file_id) {
+        userAvatar.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get_avatar?rowId=${catalystRowId}&t=${Date.now()}`
+      }
+    }
+
+  } catch (err) {
+    console.error('Error loading user data:', err)
+    // Fallback to Auth0 data
+    if (user.value) {
+      userName.value = (user.value.name || user.value.nickname || user.value.email || 'UTENTE').toUpperCase()
+    }
+  }
+}
 
 const handleLogout = () => {
   logout({
@@ -143,6 +221,11 @@ const handleLogout = () => {
     }
   })
 }
+
+// Load user data on mount
+onMounted(() => {
+  loadUserData()
+})
 </script>
 
 <style scoped>
@@ -159,6 +242,45 @@ const handleLogout = () => {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.user-avatar-container {
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e5e7eb;
+}
+
+.user-avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 3px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-placeholder-icon {
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+
+.user-info {
+  flex: 1;
+}
+
 .greeting {
   font-size: 1.75rem;
   font-weight: 600;
@@ -168,7 +290,7 @@ const handleLogout = () => {
 
 .subtitle {
   color: #6b7280;
-  margin: 0 0 1rem 0;
+  margin: 0;
   font-size: 0.95rem;
 }
 
