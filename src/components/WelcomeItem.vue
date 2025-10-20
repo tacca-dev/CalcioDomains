@@ -35,9 +35,10 @@ i {
 
 h3 {
   font-size: 1.2rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 0.4rem;
   color: var(--color-heading);
+  letter-spacing: 0.01em;
 }
 
 @media (min-width: 1024px) {
