@@ -15,8 +15,8 @@
         </div>
       </div>
       <div class="navbar-right">
-        <!-- Cart Icon (only show when authenticated) -->
-        <CartIcon v-if="isAuthenticated && !isLoading" />
+        <!-- Cart Icon (always visible) -->
+        <CartIcon v-if="!isLoading" />
 
         <!-- Show loading state -->
         <div v-if="isLoading" class="loading-text">
@@ -175,6 +175,7 @@ const login = () => {
 .navbar-right {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .login-button {

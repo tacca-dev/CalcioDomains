@@ -3,8 +3,16 @@ import { ref, onMounted } from 'vue'
 import { callGetPromptFunction, callGPT4o } from '@/services/catalyst'
 import { searchDomains } from '@/services/freename'
 import { useCart } from '@/composables/useCart'
+import { useAuth0 } from '@auth0/auth0-vue'
 
-const { addToCart } = useCart()
+// Auth0
+const { isAuthenticated, loginWithRedirect } = useAuth0()
+
+// Composable carrello con autenticazione
+const { addToCart } = useCart({
+  isAuthenticated,
+  login: loginWithRedirect
+})
 
 const domainName = ref('')
 const loading = ref(false)
@@ -230,11 +238,39 @@ async function handleSearch() {
             v-for="suggestion in suggestionsResults"
             :key="suggestion.domain"
             class="suggestion-card"
-            :class="{ 'suggestion-reserved': suggestion.reserved }"
+            :class="{
+              'suggestion-reserved': suggestion.reserved,
+              'suggestion-unavailable': !suggestion.reserved && !suggestion.available
+            }"
           >
-            <span class="suggestion-domain">{{ suggestion.domain }}</span>
-            <span v-if="suggestion.reserved" class="suggestion-reserved-label">Riservato</span>
-            <span v-else class="suggestion-price">${{ suggestion.finalPrice }}</span>
+            <div class="suggestion-info">
+              <span class="suggestion-domain">{{ suggestion.domain }}</span>
+              <span v-if="suggestion.reserved" class="suggestion-reserved-label">Riservato</span>
+              <span v-else-if="!suggestion.available" class="suggestion-unavailable-label">Non disponibile</span>
+              <span v-else class="suggestion-price">${{ suggestion.finalPrice }}</span>
+            </div>
+            <button
+              v-if="suggestion.available && !suggestion.reserved"
+              class="suggestion-add-button"
+              @click="addToCart(suggestion)"
+              title="Aggiungi al carrello"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -452,35 +488,70 @@ async function handleSearch() {
   padding: 0.75rem 1rem;
   border: 1px solid var(--color-border);
   background-color: #ffffff;
+  gap: 1rem;
 }
 
-.suggestion-card:hover {
+.suggestion-card:not(.suggestion-reserved):not(.suggestion-unavailable):hover {
   background-color: var(--color-background-soft);
 }
 
-.suggestion-reserved {
+.suggestion-reserved,
+.suggestion-unavailable {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.suggestion-reserved:hover {
+.suggestion-reserved:hover,
+.suggestion-unavailable:hover {
   background-color: #ffffff;
+}
+
+.suggestion-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
 }
 
 .suggestion-domain {
   font-size: 0.875rem;
   color: var(--color-text);
+  min-width: 140px;
 }
 
 .suggestion-price {
   font-weight: 600;
   color: var(--color-heading);
+  font-size: 0.875rem;
 }
 
-.suggestion-reserved-label {
-  font-size: 0.875rem;
+.suggestion-reserved-label,
+.suggestion-unavailable-label {
+  font-size: 0.8125rem;
   color: #dc2626;
   font-style: italic;
+}
+
+.suggestion-add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background-color: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.suggestion-add-button:hover {
+  background-color: #16a34a;
+}
+
+.suggestion-add-button:active {
+  background-color: #15803d;
 }
 
 /* API Response */

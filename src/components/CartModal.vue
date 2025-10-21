@@ -105,7 +105,12 @@
 
 <script setup>
 import { useCart } from '@/composables/useCart'
+import { useAuth0 } from '@auth0/auth0-vue'
 
+// Auth0
+const { isAuthenticated, loginWithRedirect } = useAuth0()
+
+// Composable carrello con autenticazione
 const {
   cartItems,
   showCartModal,
@@ -115,7 +120,10 @@ const {
   clearCart,
   checkout,
   toggleCartModal
-} = useCart()
+} = useCart({
+  isAuthenticated,
+  login: loginWithRedirect
+})
 
 async function handleClearCart() {
   if (confirm('Sei sicuro di voler svuotare il carrello?')) {

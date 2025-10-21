@@ -4,7 +4,34 @@ import { ref, computed } from 'vue'
 const cartItems = ref([])
 const showCartModal = ref(false)
 
-export function useCart() {
+// Funzione helper per controllare autenticazione
+let isAuthenticatedFn = null
+let loginFn = null
+
+export function useCart(options = {}) {
+  // Ricevi funzioni di autenticazione come opzioni
+  if (options.isAuthenticated) {
+    isAuthenticatedFn = options.isAuthenticated
+  }
+  if (options.login) {
+    loginFn = options.login
+  }
+
+  /**
+   * Controlla se l'utente è autenticato, altrimenti mostra alert
+   * @returns {boolean} true se autenticato, false altrimenti
+   */
+  function checkAuthentication() {
+    const authenticated = isAuthenticatedFn ? isAuthenticatedFn.value : true
+
+    if (!authenticated) {
+      alert(
+        'Devi effettuare il login per aggiungere domini al carrello.\n\nClicca su "Login" nella barra di navigazione per accedere.'
+      )
+      return false
+    }
+    return true
+  }
   /**
    * Numero totale di items nel carrello
    */
@@ -23,6 +50,11 @@ export function useCart() {
    * @param {Object} domain - Oggetto dominio con { domain_name, price, category }
    */
   async function addToCart(domain) {
+    // Controlla autenticazione
+    if (!checkAuthentication()) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
     try {
       // TODO: Chiamare funzione Catalyst add-to-cart
       // const response = await fetch('...', {
@@ -137,6 +169,10 @@ export function useCart() {
    * Mostra/nascondi modal carrello
    */
   function toggleCartModal() {
+    // Controlla autenticazione prima di aprire il modal
+    if (!showCartModal.value && !checkAuthentication()) {
+      return
+    }
     showCartModal.value = !showCartModal.value
   }
 
