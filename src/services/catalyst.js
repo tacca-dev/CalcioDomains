@@ -317,3 +317,46 @@ export async function createCheckout(userId, cartItems) {
     throw error
   }
 }
+
+/**
+ * Create order after successful payment
+ * @param {string} userId - User's ROWID
+ * @param {string} stripeSessionId - Stripe Checkout Session ID
+ * @param {number} totalAmount - Total amount paid
+ * @param {Array} domains - Array of domain objects
+ * @returns {Promise<Object>} Result with orderId
+ */
+export async function createOrder(userId, stripeSessionId, totalAmount, domains) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        stripeSessionId,
+        totalAmount,
+        domains
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to create order')
+    }
+
+    return {
+      orderId: parsedOutput.orderId
+    }
+  } catch (error) {
+    console.error('Error creating order:', error)
+    throw error
+  }
+}
