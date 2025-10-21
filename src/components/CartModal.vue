@@ -60,7 +60,7 @@
               <span class="item-price">${{ item.price.toFixed(2) }}</span>
               <button
                 class="remove-button"
-                @click="removeFromCart(item.id)"
+                @click="removeFromCart(item.domain_name)"
                 aria-label="Rimuovi dal carrello"
               >
                 <svg
@@ -131,14 +131,14 @@ const {
 
 // Carica il carrello quando l'utente è autenticato
 onMounted(() => {
-  if (isAuthenticated.value) {
+  if (isAuthenticated.value && user.value) {
     loadCart()
   }
 })
 
-// Carica il carrello quando l'utente si autentica
-watch(isAuthenticated, (authenticated) => {
-  if (authenticated) {
+// Carica il carrello quando l'utente si autentica o quando user diventa disponibile
+watch([isAuthenticated, user], ([authenticated, userValue]) => {
+  if (authenticated && userValue) {
     loadCart()
   }
 })

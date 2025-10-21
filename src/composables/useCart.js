@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useToast } from './useToast'
-import { addDomainToCart, getUserCart } from '@/services/catalyst'
+import { addDomainToCart, getUserCart, deleteFromCart } from '@/services/catalyst'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
@@ -162,24 +162,32 @@ export function useCart(options = {}) {
   }
 
   /**
-   * Rimuovi item dal carrello
-   * @param {number} itemId - ID dell'item da rimuovere
+   * Rimuovi item dal carrello per nome dominio
+   * @param {string} domainName - Nome del dominio da rimuovere
    */
-  async function removeFromCart(itemId) {
+  async function removeFromCart(domainName) {
     try {
-      // TODO: Chiamare DELETE su Catalyst
-      // await fetch(`.../cart-items/${itemId}`, { method: 'DELETE' })
+      // Ottieni catalystRowId
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        toastError('Impossibile identificare l\'utente', 3000)
+        return
+      }
 
-      // Per ora rimuovi localmente
-      const index = cartItems.value.findIndex((item) => item.id === itemId)
+      // Chiama funzione Catalyst delete-from-cart
+      await deleteFromCart(catalystRowId, domainName)
+
+      // Rimuovi dal carrello locale
+      const index = cartItems.value.findIndex((item) => item.domain_name === domainName)
       if (index !== -1) {
         cartItems.value.splice(index, 1)
       }
 
-      console.log('✅ Item rimosso dal carrello')
+      console.log('✅ Item rimosso dal carrello:', domainName)
+      success('Dominio rimosso dal carrello', 2000)
     } catch (error) {
       console.error('❌ Errore rimuovendo dal carrello:', error)
-      throw error
+      toastError('Errore rimuovendo dal carrello. Riprova.', 3000)
     }
   }
 
@@ -219,14 +227,29 @@ export function useCart(options = {}) {
    */
   async function clearCart() {
     try {
-      // TODO: Chiamare DELETE su Catalyst per tutti gli items dell'utente
-      // await fetch('...', { method: 'DELETE' })
+      // Ottieni catalystRowId
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        toastError('Impossibile identificare l\'utente', 3000)
+        return
+      }
 
+      // Ottieni tutti i nomi dei domini nel carrello
+      const domainNames = cartItems.value.map(item => item.domain_name)
+
+      if (domainNames.length > 0) {
+        // Chiama funzione Catalyst delete-from-cart con tutti i domini
+        await deleteFromCart(catalystRowId, domainNames)
+      }
+
+      // Svuota carrello locale
       cartItems.value = []
+
       console.log('✅ Carrello svuotato')
+      success('Carrello svuotato', 2000)
     } catch (error) {
       console.error('❌ Errore svuotando carrello:', error)
-      throw error
+      toastError('Errore svuotando il carrello. Riprova.', 3000)
     }
   }
 

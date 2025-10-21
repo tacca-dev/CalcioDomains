@@ -237,3 +237,43 @@ export async function getUserCart(userId) {
     throw error
   }
 }
+
+/**
+ * Delete items from user's cart by domain names
+ * @param {string} userId - User's ROWID
+ * @param {string|Array<string>} domainNames - Single domain name or array of domain names to delete
+ * @returns {Promise<Object>} Result with deletedCount and deletedDomains
+ */
+export async function deleteFromCart(userId, domainNames) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/delete-from-cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        domainNames: Array.isArray(domainNames) ? domainNames : [domainNames]
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to delete from cart')
+    }
+
+    return {
+      deletedCount: parsedOutput.deletedCount,
+      deletedDomains: parsedOutput.deletedDomains
+    }
+  } catch (error) {
+    console.error('Error deleting from cart:', error)
+    throw error
+  }
+}
