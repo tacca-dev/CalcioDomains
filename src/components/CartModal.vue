@@ -104,11 +104,12 @@
 </template>
 
 <script setup>
+import { onMounted, watch } from 'vue'
 import { useCart } from '@/composables/useCart'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 // Auth0
-const { isAuthenticated, loginWithRedirect } = useAuth0()
+const { isAuthenticated, loginWithRedirect, user, getAccessTokenSilently } = useAuth0()
 
 // Composable carrello con autenticazione
 const {
@@ -119,10 +120,27 @@ const {
   removeFromCart,
   clearCart,
   checkout,
-  toggleCartModal
+  toggleCartModal,
+  loadCart
 } = useCart({
   isAuthenticated,
-  login: loginWithRedirect
+  login: loginWithRedirect,
+  user,
+  getAccessTokenSilently
+})
+
+// Carica il carrello quando l'utente è autenticato
+onMounted(() => {
+  if (isAuthenticated.value) {
+    loadCart()
+  }
+})
+
+// Carica il carrello quando l'utente si autentica
+watch(isAuthenticated, (authenticated) => {
+  if (authenticated) {
+    loadCart()
+  }
 })
 
 async function handleClearCart() {

@@ -188,8 +188,9 @@ export function useCart(options = {}) {
    */
   async function loadCart() {
     try {
-      // Controlla autenticazione
-      if (!checkAuthentication()) {
+      // Controlla autenticazione senza mostrare toast (controllo silenzioso)
+      const authenticated = isAuthenticatedFn ? isAuthenticatedFn.value : true
+      if (!authenticated) {
         return
       }
 

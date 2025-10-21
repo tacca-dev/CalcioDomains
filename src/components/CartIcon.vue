@@ -24,12 +24,14 @@ import { useCart } from '@/composables/useCart'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 // Auth0
-const { isAuthenticated, loginWithRedirect } = useAuth0()
+const { isAuthenticated, loginWithRedirect, user, getAccessTokenSilently } = useAuth0()
 
 // Composable carrello con autenticazione
 const { cartCount, toggleCartModal } = useCart({
   isAuthenticated,
-  login: loginWithRedirect
+  login: loginWithRedirect,
+  user,
+  getAccessTokenSilently
 })
 </script>
 
