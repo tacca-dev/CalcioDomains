@@ -177,11 +177,9 @@ export function useCart(options = {}) {
       // Chiama funzione Catalyst delete-from-cart
       await deleteFromCart(catalystRowId, domainName)
 
-      // Rimuovi dal carrello locale
-      const index = cartItems.value.findIndex((item) => item.domain_name === domainName)
-      if (index !== -1) {
-        cartItems.value.splice(index, 1)
-      }
+      // Ricarica il carrello dal database per evitare inconsistenze
+      const items = await getUserCart(catalystRowId)
+      cartItems.value = items
 
       console.log('✅ Item rimosso dal carrello:', domainName)
       success('Dominio rimosso dal carrello', 2000)
@@ -242,8 +240,9 @@ export function useCart(options = {}) {
         await deleteFromCart(catalystRowId, domainNames)
       }
 
-      // Svuota carrello locale
-      cartItems.value = []
+      // Ricarica il carrello dal database per evitare inconsistenze
+      const items = await getUserCart(catalystRowId)
+      cartItems.value = items
 
       console.log('✅ Carrello svuotato')
       success('Carrello svuotato', 2000)
