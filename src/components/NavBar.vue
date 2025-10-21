@@ -15,6 +15,9 @@
         </div>
       </div>
       <div class="navbar-right">
+        <!-- Cart Icon (only show when authenticated) -->
+        <CartIcon v-if="isAuthenticated && !isLoading" />
+
         <!-- Show loading state -->
         <div v-if="isLoading" class="loading-text">
           Caricamento...
@@ -44,6 +47,7 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
+import CartIcon from './CartIcon.vue'
 // import { ref, onMounted } from 'vue'
 // import { isAuthenticated as checkAuth, getCurrentUser, signIn, signOut } from '../services/auth'
 

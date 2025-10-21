@@ -2,6 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { callGetPromptFunction, callGPT4o } from '@/services/catalyst'
 import { searchDomains } from '@/services/freename'
+import { useCart } from '@/composables/useCart'
+
+const { addToCart } = useCart()
 
 const domainName = ref('')
 const loading = ref(false)
@@ -200,6 +203,12 @@ async function handleSearch() {
             <p>Moltiplicatore: {{ mainDomainResult.coefficient }}x</p>
             <p class="result-final-price">Prezzo finale: ${{ mainDomainResult.finalPrice }}</p>
           </div>
+          <button
+            class="add-to-cart-button"
+            @click="addToCart(mainDomainResult)"
+          >
+            Aggiungi al carrello
+          </button>
         </div>
         <div v-else class="result-card result-unavailable">
           <h3 class="result-title">✗ {{ mainDomainResult.domain }} non è disponibile</h3>
@@ -370,6 +379,26 @@ async function handleSearch() {
   font-size: 1.125rem;
   color: var(--color-heading);
   margin-top: 0.5rem;
+}
+
+.add-to-cart-button {
+  margin-top: 1rem;
+  padding: 0.625rem 1.25rem;
+  background-color: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-to-cart-button:hover {
+  background-color: #16a34a;
+}
+
+.add-to-cart-button:active {
+  background-color: #15803d;
 }
 
 /* Suggestions */

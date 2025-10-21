@@ -1,6 +1,7 @@
 <script setup>
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
+import CartModal from './components/CartModal.vue'
 </script>
 
 <template>
@@ -9,6 +10,7 @@ import NavBar from './components/NavBar.vue'
     <div class="app-container">
       <RouterView />
     </div>
+    <CartModal />
   </div>
 </template>
 
