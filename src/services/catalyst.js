@@ -277,3 +277,43 @@ export async function deleteFromCart(userId, domainNames) {
     throw error
   }
 }
+
+/**
+ * Create Stripe Checkout Session
+ * @param {string} userId - User's ROWID
+ * @param {Array} cartItems - Array of cart items with { domain_name, price, category }
+ * @returns {Promise<Object>} Result with checkoutUrl and sessionId
+ */
+export async function createCheckout(userId, cartItems) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/create-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        cartItems
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to create checkout session')
+    }
+
+    return {
+      checkoutUrl: parsedOutput.checkoutUrl,
+      sessionId: parsedOutput.sessionId
+    }
+  } catch (error) {
+    console.error('Error creating checkout:', error)
+    throw error
+  }
+}

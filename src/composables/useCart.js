@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useToast } from './useToast'
-import { addDomainToCart, getUserCart, deleteFromCart } from '@/services/catalyst'
+import { addDomainToCart, getUserCart, deleteFromCart, createCheckout } from '@/services/catalyst'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
@@ -256,23 +256,33 @@ export function useCart(options = {}) {
    * Procedi al checkout con Stripe
    */
   async function checkout() {
-    try {
-      // TODO: Chiamare funzione Catalyst create-checkout
-      // const response = await fetch('...', {
-      //   method: 'POST',
-      //   body: JSON.stringify({
-      //     userId: currentUser.id,
-      //     cartItems: cartItems.value
-      //   })
-      // })
-      // const data = await response.json()
-      // window.location.href = data.checkoutUrl
+    if (!checkAuthentication()) {
+      return
+    }
 
-      console.log('🚀 Redirect a Stripe Checkout... (TODO)')
-      alert('Checkout Stripe - TODO: implementare create-checkout function')
+    if (cartItems.value.length === 0) {
+      toastError('Il carrello è vuoto', 3000)
+      return
+    }
+
+    try {
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
+        return
+      }
+
+      console.log('🚀 Creazione Stripe Checkout Session...')
+
+      const { checkoutUrl, sessionId } = await createCheckout(catalystRowId, cartItems.value)
+
+      console.log('✅ Checkout Session creata:', sessionId)
+      console.log('Redirect a:', checkoutUrl)
+
+      window.location.href = checkoutUrl
     } catch (error) {
       console.error('❌ Errore durante checkout:', error)
-      throw error
+      toastError('Errore creando la sessione di pagamento. Riprova.', 4000)
     }
   }
 
