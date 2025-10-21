@@ -1,16 +1,19 @@
 import { ref, computed } from 'vue'
 import { useToast } from './useToast'
+import { addDomainToCart, getUserCart } from '@/services/catalyst'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
 const showCartModal = ref(false)
 
 // Toast globale
-const { warning, success } = useToast()
+const { warning, success, error: toastError } = useToast()
 
-// Funzione helper per controllare autenticazione
+// Funzioni helper per controllare autenticazione e ottenere user data
 let isAuthenticatedFn = null
 let loginFn = null
+let getUserFn = null
+let getAccessTokenSilentlyFn = null
 
 export function useCart(options = {}) {
   // Ricevi funzioni di autenticazione come opzioni
@@ -19,6 +22,12 @@ export function useCart(options = {}) {
   }
   if (options.login) {
     loginFn = options.login
+  }
+  if (options.user) {
+    getUserFn = options.user
+  }
+  if (options.getAccessTokenSilently) {
+    getAccessTokenSilentlyFn = options.getAccessTokenSilently
   }
 
   /**
@@ -33,6 +42,60 @@ export function useCart(options = {}) {
       return false
     }
     return true
+  }
+
+  /**
+   * Ottieni catalystRowId da Auth0 user metadata
+   * @returns {Promise<string|null>} catalystRowId o null se non trovato
+   */
+  async function getCatalystRowId() {
+    try {
+      if (!getUserFn || !getAccessTokenSilentlyFn) {
+        console.warn('getUserFn o getAccessTokenSilentlyFn non fornito')
+        return null
+      }
+
+      const user = getUserFn.value
+      if (!user) {
+        console.warn('User non trovato')
+        return null
+      }
+
+      // Ottieni token Auth0 per accedere al Management API
+      const token = await getAccessTokenSilentlyFn({
+        authorizationParams: {
+          audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+          scope: 'read:current_user'
+        }
+      })
+
+      // Fetch user metadata da Auth0
+      const response = await fetch(
+        `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.sub}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Errore recuperando dati Auth0')
+      }
+
+      const auth0Data = await response.json()
+      const catalystRowId = auth0Data.user_metadata?.catalystRowId
+
+      if (!catalystRowId) {
+        console.warn('catalystRowId non trovato in Auth0 user_metadata')
+        return null
+      }
+
+      return catalystRowId
+    } catch (error) {
+      console.error('Errore ottenendo catalystRowId:', error)
+      return null
+    }
   }
   /**
    * Numero totale di items nel carrello
@@ -49,7 +112,7 @@ export function useCart(options = {}) {
 
   /**
    * Aggiungi dominio al carrello
-   * @param {Object} domain - Oggetto dominio con { domain_name, price, category }
+   * @param {Object} domain - Oggetto dominio con { domain, finalPrice, category }
    */
   async function addToCart(domain) {
     // Controlla autenticazione
@@ -58,20 +121,24 @@ export function useCart(options = {}) {
     }
 
     try {
-      // TODO: Chiamare funzione Catalyst add-to-cart
-      // const response = await fetch('...', {
-      //   method: 'POST',
-      //   body: JSON.stringify({
-      //     userId: currentUser.id,
-      //     domainName: domain.domain_name,
-      //     finalPrice: Math.round(domain.price * 100), // converti in centesimi
-      //     category: domain.category
-      //   })
-      // })
+      // Ottieni catalystRowId
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
+        return { success: false, error: 'No catalystRowId' }
+      }
 
-      // Per ora aggiungi localmente
+      // Chiama funzione Catalyst add-to-cart
+      const cartItem = await addDomainToCart(
+        catalystRowId,
+        domain.domain,
+        domain.finalPrice,
+        domain.category
+      )
+
+      // Aggiungi al carrello locale
       cartItems.value.push({
-        id: Date.now(), // temporaneo, poi sarà ROWID dal database
+        id: cartItem.cartItemId,
         domain_name: domain.domain,
         price: domain.finalPrice,
         category: domain.category
@@ -82,7 +149,15 @@ export function useCart(options = {}) {
       return { success: true }
     } catch (error) {
       console.error('❌ Errore aggiungendo al carrello:', error)
-      throw error
+
+      // Mostra errore specifico se dominio già nel carrello
+      if (error.message && error.message.includes('already in cart')) {
+        toastError('Questo dominio è già nel carrello', 3000)
+      } else {
+        toastError('Errore aggiungendo al carrello. Riprova.', 3000)
+      }
+
+      return { success: false, error: error.message }
     }
   }
 
@@ -113,18 +188,28 @@ export function useCart(options = {}) {
    */
   async function loadCart() {
     try {
-      // TODO: Chiamare funzione Catalyst get-cart
-      // const response = await fetch('...', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ userId: currentUser.id })
-      // })
-      // const data = await response.json()
-      // cartItems.value = data.items
+      // Controlla autenticazione
+      if (!checkAuthentication()) {
+        return
+      }
 
-      console.log('✅ Carrello caricato')
+      // Ottieni catalystRowId
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        console.warn('Impossibile caricare carrello: catalystRowId non trovato')
+        return
+      }
+
+      // Chiama funzione Catalyst get-cart
+      const items = await getUserCart(catalystRowId)
+
+      // Aggiorna carrello locale
+      cartItems.value = items
+
+      console.log('✅ Carrello caricato:', items.length, 'items')
     } catch (error) {
       console.error('❌ Errore caricando carrello:', error)
-      throw error
+      // Non mostrare toast - il caricamento è silenzioso
     }
   }
 

@@ -79,3 +79,161 @@ export async function searchDomain(domainName) {
 
   return { evaluation, coefficients }
 }
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+/**
+ * Get user data from Catalyst database
+ * @param {string} catalystRowId - User's ROWID in Catalyst users table
+ * @returns {Promise<object>} User data object
+ */
+export async function getUserData(catalystRowId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-user-data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ catalystRowId })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    // Parse Catalyst output (can be string or already parsed)
+    const parsedData = data.output
+      ? (typeof data.output === 'string' ? JSON.parse(data.output) : data.output)
+      : data
+
+    if (!parsedData.success) {
+      throw new Error(parsedData.error || 'Failed to get user data')
+    }
+
+    return parsedData.data
+  } catch (error) {
+    console.error('Error getting user data:', error)
+    throw error
+  }
+}
+
+/**
+ * Update user profile (name, nickname, avatar)
+ * @param {FormData} formData - Form data with catalystRowId, name, nickname, and optional avatar file
+ * @returns {Promise<object>} Update result
+ */
+export async function updateUserProfile(formData) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/update-user`, {
+      method: 'POST',
+      body: formData
+      // Note: Don't set Content-Type header - browser sets it with boundary for multipart/form-data
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const result = await response.json()
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update profile')
+    }
+
+    return result
+  } catch (error) {
+    console.error('Error updating user profile:', error)
+    throw error
+  }
+}
+
+/**
+ * Get avatar URL for a user
+ * @param {string} catalystRowId - User's ROWID
+ * @returns {string} Avatar URL with cache-busting timestamp
+ */
+export function getAvatarUrl(catalystRowId) {
+  return `${CATALYST_BASE_URL}/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
+}
+
+// ============================================================================
+// CART MANAGEMENT
+// ============================================================================
+
+/**
+ * Add domain to user's cart
+ * @param {string} userId - User's ROWID
+ * @param {string} domainName - Domain name (e.g., "juventus.calcio")
+ * @param {number} price - Final price
+ * @param {string} category - Domain category
+ * @returns {Promise<object>} Cart item data
+ */
+export async function addDomainToCart(userId, domainName, price, category) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/add-to-cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        domainName,
+        price,
+        category
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to add to cart')
+    }
+
+    return parsedOutput.data
+  } catch (error) {
+    console.error('Error adding to cart:', error)
+    throw error
+  }
+}
+
+/**
+ * Get user's cart items
+ * @param {string} userId - User's ROWID
+ * @returns {Promise<Array>} Array of cart items
+ */
+export async function getUserCart(userId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get cart')
+    }
+
+    return parsedOutput.items || []
+  } catch (error) {
+    console.error('Error getting cart:', error)
+    throw error
+  }
+}

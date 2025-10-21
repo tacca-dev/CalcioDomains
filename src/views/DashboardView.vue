@@ -140,6 +140,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
+import { getUserData, getAvatarUrl } from '@/services/catalyst'
 
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
@@ -180,29 +181,15 @@ const loadUserData = async () => {
       return
     }
 
-    // 2. Fetch user data from Catalyst
-    const catalystResponse = await axios.post(
-      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get-user-data',
-      { catalystRowId }
-    )
+    // 2. Fetch user data from Catalyst using centralized function
+    const userData = await getUserData(catalystRowId)
 
-    // Parse response
-    const parsedData = catalystResponse.data.output
-      ? (typeof catalystResponse.data.output === 'string'
-          ? JSON.parse(catalystResponse.data.output)
-          : catalystResponse.data.output)
-      : catalystResponse.data
+    // Set user name
+    userName.value = (userData.name || userData.nickname || user.value.email || 'UTENTE').toUpperCase()
 
-    if (parsedData.success && parsedData.data) {
-      const userData = parsedData.data
-
-      // Set user name
-      userName.value = (userData.name || userData.nickname || user.value.email || 'UTENTE').toUpperCase()
-
-      // Set avatar if exists
-      if (userData.avatar_file_id) {
-        userAvatar.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
-      }
+    // Set avatar if exists
+    if (userData.avatar_file_id) {
+      userAvatar.value = getAvatarUrl(catalystRowId)
     }
 
   } catch (err) {

@@ -145,6 +145,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
+import { getUserData, updateUserProfile, getAvatarUrl } from '@/services/catalyst'
 
 const { user, getAccessTokenSilently } = useAuth0()
 
@@ -196,24 +197,8 @@ const loadUserMetadata = async () => {
       throw new Error('catalystRowId non trovato in Auth0. Contatta il supporto.')
     }
 
-    // 2. Fetch user data from Catalyst DB
-    const catalystResponse = await axios.post(
-      'https://calciodomains-20105566495.development.catalystserverless.eu/server/get-user-data',
-      { catalystRowId }
-    )
-
-    // Parse response (Catalyst wraps in "output")
-    const parsedData = catalystResponse.data.output
-      ? (typeof catalystResponse.data.output === 'string'
-          ? JSON.parse(catalystResponse.data.output)
-          : catalystResponse.data.output)
-      : catalystResponse.data
-
-    if (!parsedData.success) {
-      throw new Error(parsedData.error || 'Errore nel caricamento dati')
-    }
-
-    const userData = parsedData.data
+    // 2. Fetch user data from Catalyst DB using centralized function
+    const userData = await getUserData(catalystRowId)
 
     // 3. Populate form with Catalyst data
     formData.value = {
@@ -224,7 +209,7 @@ const loadUserMetadata = async () => {
 
     // 4. Load avatar if exists
     if (userData.avatar_file_id) {
-      currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu/server/get-avatar?rowId=${catalystRowId}&t=${Date.now()}`
+      currentAvatarUrl.value = getAvatarUrl(catalystRowId)
     }
 
   } catch (err) {
@@ -323,19 +308,8 @@ const handleSaveProfile = async () => {
       formDataToSend.append('avatar', formData.value.avatar)
     }
 
-    // 3. Send to Catalyst update-user (advancedIO)
-    const updateResponse = await axios.post(
-      'https://calciodomains-20105566495.development.catalystserverless.eu/server/update-user',
-      formDataToSend,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      }
-    )
-
-    // Parse response
-    const result = updateResponse.data
+    // 3. Send to Catalyst update-user using centralized function
+    const result = await updateUserProfile(formDataToSend)
 
     if (!result.success) {
       // Check se errore è nickname già esistente
