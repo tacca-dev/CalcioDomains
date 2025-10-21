@@ -1,8 +1,12 @@
 import { ref, computed } from 'vue'
+import { useToast } from './useToast'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
 const showCartModal = ref(false)
+
+// Toast globale
+const { warning, success } = useToast()
 
 // Funzione helper per controllare autenticazione
 let isAuthenticatedFn = null
@@ -18,16 +22,14 @@ export function useCart(options = {}) {
   }
 
   /**
-   * Controlla se l'utente è autenticato, altrimenti mostra alert
+   * Controlla se l'utente è autenticato, altrimenti mostra toast
    * @returns {boolean} true se autenticato, false altrimenti
    */
   function checkAuthentication() {
     const authenticated = isAuthenticatedFn ? isAuthenticatedFn.value : true
 
     if (!authenticated) {
-      alert(
-        'Devi effettuare il login per aggiungere domini al carrello.\n\nClicca su "Login" nella barra di navigazione per accedere.'
-      )
+      warning('Devi effettuare il login per accedere al carrello. Clicca su "Login" nella barra di navigazione.', 5000)
       return false
     }
     return true
@@ -75,7 +77,8 @@ export function useCart(options = {}) {
         category: domain.category
       })
 
-      console.log('✅ Dominio aggiunto al carrello:', domain.domain)
+      console.log('Dominio aggiunto al carrello:', domain.domain)
+      success(`${domain.domain} aggiunto al carrello`, 3000)
       return { success: true }
     } catch (error) {
       console.error('❌ Errore aggiungendo al carrello:', error)

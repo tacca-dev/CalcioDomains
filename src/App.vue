@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import CartModal from './components/CartModal.vue'
+import ToastContainer from './components/ToastContainer.vue'
 </script>
 
 <template>
@@ -11,6 +12,7 @@ import CartModal from './components/CartModal.vue'
       <RouterView />
     </div>
     <CartModal />
+    <ToastContainer />
   </div>
 </template>
 
