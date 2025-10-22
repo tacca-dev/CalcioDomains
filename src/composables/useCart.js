@@ -153,6 +153,8 @@ export function useCart(options = {}) {
       // Mostra errore specifico se dominio già nel carrello
       if (error.message && error.message.includes('already in cart')) {
         toastError('Questo dominio è già nel carrello', 3000)
+      } else if (error.message && error.message.includes('riservato')) {
+        toastError('Dominio temporaneamente riservato da un altro utente', 4000)
       } else {
         toastError('Errore aggiungendo al carrello. Riprova.', 3000)
       }

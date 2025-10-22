@@ -4,6 +4,7 @@ import DomainsView from '../views/DomainsView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import SuccessView from '../views/SuccessView.vue'
+import CancelView from '../views/CancelView.vue'
 // import AppRedirect from '../views/AppRedirect.vue'
 /** LOGIN AUTH0 - START */
 // import AuthCallback from '../views/AuthCallback.vue'
@@ -36,6 +37,11 @@ const router = createRouter({
       path: '/success',
       name: 'success',
       component: SuccessView
+    },
+    {
+      path: '/cancel',
+      name: 'cancel',
+      component: CancelView
     },
     /** CATALYST NATIVE AUTHENTICATION - START */
     // {

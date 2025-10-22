@@ -360,3 +360,40 @@ export async function createOrder(userId, stripeSessionId, totalAmount, domains)
     throw error
   }
 }
+
+/**
+ * Check if a domain is available (not reserved by pending order)
+ * @param {string} domainName - Domain name to check
+ * @returns {Promise<Object>} Result with available, reservedUntil, reservedBy
+ */
+export async function checkDomainAvailability(domainName) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/check-domain-availability`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ domainName })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to check domain availability')
+    }
+
+    return {
+      available: parsedOutput.available,
+      reservedUntil: parsedOutput.reservedUntil,
+      reservedBy: parsedOutput.reservedBy
+    }
+  } catch (error) {
+    console.error('Error checking domain availability:', error)
+    throw error
+  }
+}
