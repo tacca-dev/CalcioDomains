@@ -127,10 +127,53 @@
       </div>
 
       <!-- Operazioni Tab -->
-      <div v-if="activeTab === 'operazioni'" class="empty-state">
-        <div class="empty-icon">📋</div>
-        <h2 class="empty-title">NESSUNA OPERAZIONE REGISTRATA</h2>
-        <p class="empty-description">Non hai ancora effettuato nessuna operazione (acquisti, vendite, ricariche)</p>
+      <div v-if="activeTab === 'operazioni'">
+        <!-- Loading state -->
+        <div v-if="ordersLoading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Caricamento operazioni...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="userOrders.length === 0" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h2 class="empty-title">NESSUNA OPERAZIONE REGISTRATA</h2>
+          <p class="empty-description">Non hai ancora effettuato nessun acquisto completato</p>
+        </div>
+
+        <!-- Orders list -->
+        <div v-else class="orders-list">
+          <div v-for="order in userOrders" :key="order.id" class="order-card">
+            <div class="order-header">
+              <div class="order-info">
+                <span class="order-id">Ordine #{{ order.id }}</span>
+                <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+              </div>
+              <div class="order-status">
+                <span class="status-badge status-paid">✓ Completato</span>
+              </div>
+            </div>
+
+            <div class="order-body">
+              <div class="order-domains">
+                <h4 class="domains-title">Domini acquistati:</h4>
+                <ul class="domains-list">
+                  <li v-for="domain in order.domains" :key="domain.domain_name" class="domain-item">
+                    <span class="domain-name">{{ domain.domain_name }}</span>
+                    <span class="domain-price">{{ domain.price.toFixed(2) }} €</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="order-footer">
+              <div class="order-total">
+                <span class="total-label">Totale pagato:</span>
+                <span class="total-amount">{{ order.totalAmount.toFixed(2) }} €</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -140,7 +183,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
-import { getUserData, getAvatarUrl } from '@/services/catalyst'
+import { getUserData, getAvatarUrl, getUserOrders } from '@/services/catalyst'
 
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
@@ -150,6 +193,8 @@ const activeTab = ref('domini')
 // User data from Catalyst
 const userName = ref('UTENTE')
 const userAvatar = ref(null)
+const userOrders = ref([])
+const ordersLoading = ref(false)
 
 // Load user data from Catalyst
 const loadUserData = async () => {
@@ -201,6 +246,61 @@ const loadUserData = async () => {
   }
 }
 
+// Load user orders
+const loadUserOrders = async () => {
+  try {
+    ordersLoading.value = true
+
+    if (!user.value) return
+
+    // Get catalystRowId from Auth0
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        scope: 'read:current_user'
+      }
+    })
+
+    const auth0Response = await axios.get(
+      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
+
+    if (!catalystRowId) {
+      console.warn('catalystRowId non trovato')
+      return
+    }
+
+    // Fetch orders
+    const orders = await getUserOrders(catalystRowId)
+    userOrders.value = orders
+
+    console.log('✅ Ordini caricati:', orders.length)
+  } catch (err) {
+    console.error('Error loading user orders:', err)
+  } finally {
+    ordersLoading.value = false
+  }
+}
+
+// Format date helper
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('it-IT', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
 const handleLogout = () => {
   logout({
     logoutParams: {
@@ -212,6 +312,7 @@ const handleLogout = () => {
 // Load user data on mount
 onMounted(() => {
   loadUserData()
+  loadUserOrders()
 })
 </script>
 
@@ -494,6 +595,163 @@ onMounted(() => {
   font-size: 0.95rem;
 }
 
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 1rem;
+  border: 3px solid #e5e7eb;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Orders List */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.order-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.order-id {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+}
+
+.order-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.order-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-paid {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.order-body {
+  padding: 1.25rem;
+}
+
+.order-domains {
+  margin: 0;
+}
+
+.domains-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.domains-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.domain-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.domain-name {
+  font-weight: 500;
+  color: #1a1a1a;
+  font-size: 0.95rem;
+}
+
+.domain-price {
+  font-weight: 600;
+  color: #10b981;
+  font-size: 0.95rem;
+}
+
+.order-footer {
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.total-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .dashboard-container {
@@ -531,6 +789,18 @@ onMounted(() => {
 
   .tab-button {
     width: 100%;
+  }
+
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .domain-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }
 </style>

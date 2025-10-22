@@ -397,3 +397,36 @@ export async function checkDomainAvailability(domainName) {
     throw error
   }
 }
+
+/**
+ * Get all paid orders for a user
+ * @param {string} userId - User's ROWID
+ * @returns {Promise<Array>} Array of order objects
+ */
+export async function getUserOrders(userId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-user-orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ userId })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get user orders')
+    }
+
+    return parsedOutput.orders || []
+  } catch (error) {
+    console.error('Error getting user orders:', error)
+    throw error
+  }
+}
