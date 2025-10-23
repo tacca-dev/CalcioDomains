@@ -23,22 +23,39 @@
       <p class="cancel-subtitle">Il pagamento non è stato completato</p>
 
       <div class="info-box">
-        <p>Non ti preoccupare, il tuo ordine è stato salvato.</p>
-        <p>Puoi tornare indietro e riprovare: il tuo ordine è salvato per due ore.</p>
+        <template v-if="isRecharge">
+          <p>La ricarica è stata annullata.</p>
+          <p>Puoi riprovare in qualsiasi momento dalla tua dashboard.</p>
+        </template>
+        <template v-else>
+          <p>Non ti preoccupare, il tuo ordine è stato salvato.</p>
+          <p>Puoi tornare indietro e riprovare: il tuo ordine è salvato per due ore.</p>
+        </template>
       </div>
 
       <div class="cancel-actions">
-        <router-link to="/cart" class="btn-primary" @click="openCart">Torna al tuo ordine</router-link>
-        <router-link to="/domains" class="btn-secondary">Cerca altri domini</router-link>
+        <router-link v-if="!isRecharge" to="/cart" class="btn-primary" @click="openCart">Torna al tuo ordine</router-link>
+        <router-link to="/dashboard" class="btn-primary">Torna alla dashboard</router-link>
+        <router-link v-if="!isRecharge" to="/domains" class="btn-secondary">Cerca altri domini</router-link>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCart } from '@/composables/useCart'
 
+const route = useRoute()
 const { toggleCartModal } = useCart()
+
+const isRecharge = ref(false)
+
+onMounted(() => {
+  const paymentType = route.query.type || 'order'
+  isRecharge.value = paymentType === 'recharge'
+})
 
 function openCart() {
   toggleCartModal()
