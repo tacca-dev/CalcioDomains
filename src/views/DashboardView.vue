@@ -248,6 +248,10 @@ const loadUserData = async () => {
       userAvatar.value = getAvatarUrl(catalystRowId)
     }
 
+    // Set user credits
+    userCredits.value = parseFloat(userData.credits || 0)
+    console.log('💰 Crediti caricati:', userCredits.value)
+
   } catch (err) {
     console.error('Error loading user data:', err)
     // Fallback to Auth0 data
@@ -325,6 +329,7 @@ const handleRecharge = async (rechargeData) => {
   try {
     if (!user.value) {
       toastError('Devi effettuare il login per ricaricare', 3000)
+      showRechargeModal.value = false
       return
     }
 
@@ -351,6 +356,7 @@ const handleRecharge = async (rechargeData) => {
 
     if (!catalystRowId) {
       toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
+      showRechargeModal.value = false
       return
     }
 
@@ -369,6 +375,7 @@ const handleRecharge = async (rechargeData) => {
   } catch (error) {
     console.error('❌ Errore durante la creazione della ricarica:', error)
     toastError('Errore creando la sessione di pagamento. Riprova.', 4000)
+    showRechargeModal.value = false
   }
 }
 

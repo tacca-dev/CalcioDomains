@@ -130,10 +130,17 @@ onMounted(async () => {
 
       const result = await processRecharge(catalystRowId, sessionId.value)
 
-      console.log('✅ Ricarica completata:', {
-        creditsAdded: result.creditsAdded,
-        newBalance: result.newBalance
-      })
+      if (result.alreadyProcessed) {
+        console.log('⚠️ Ricarica già processata in precedenza:', {
+          creditsAdded: result.creditsAdded,
+          currentBalance: result.newBalance
+        })
+      } else {
+        console.log('✅ Ricarica completata:', {
+          creditsAdded: result.creditsAdded,
+          newBalance: result.newBalance
+        })
+      }
 
       processing.value = false
       return
