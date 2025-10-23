@@ -1,20 +1,21 @@
 import { ref, computed } from 'vue'
 import { useToast } from './useToast'
-import { addDomainToCart, getUserCart, deleteFromCart, createCheckout, payWithCredits, getUserData } from '@/services/catalyst'
+import { useUser } from './useUser'
+import { addDomainToCart, getUserCart, deleteFromCart, createCheckout, payWithCredits } from '@/services/catalyst'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
 const showCartModal = ref(false)
-const userCredits = ref(0)
 
 // Toast globale
 const { warning, success, error: toastError } = useToast()
 
-// Funzioni helper per controllare autenticazione e ottenere user data
+// User composable (per catalystRowId e crediti)
+const { catalystRowId, credits } = useUser()
+
+// Funzioni helper per controllare autenticazione
 let isAuthenticatedFn = null
 let loginFn = null
-let getUserFn = null
-let getAccessTokenSilentlyFn = null
 
 export function useCart(options = {}) {
   // Ricevi funzioni di autenticazione come opzioni
@@ -23,12 +24,6 @@ export function useCart(options = {}) {
   }
   if (options.login) {
     loginFn = options.login
-  }
-  if (options.user) {
-    getUserFn = options.user
-  }
-  if (options.getAccessTokenSilently) {
-    getAccessTokenSilentlyFn = options.getAccessTokenSilently
   }
 
   /**
@@ -43,60 +38,6 @@ export function useCart(options = {}) {
       return false
     }
     return true
-  }
-
-  /**
-   * Ottieni catalystRowId da Auth0 user metadata
-   * @returns {Promise<string|null>} catalystRowId o null se non trovato
-   */
-  async function getCatalystRowId() {
-    try {
-      if (!getUserFn || !getAccessTokenSilentlyFn) {
-        console.warn('getUserFn o getAccessTokenSilentlyFn non fornito')
-        return null
-      }
-
-      const user = getUserFn.value
-      if (!user) {
-        console.warn('User non trovato')
-        return null
-      }
-
-      // Ottieni token Auth0 per accedere al Management API
-      const token = await getAccessTokenSilentlyFn({
-        authorizationParams: {
-          audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
-          scope: 'read:current_user'
-        }
-      })
-
-      // Fetch user metadata da Auth0
-      const response = await fetch(
-        `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.sub}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Errore recuperando dati Auth0')
-      }
-
-      const auth0Data = await response.json()
-      const catalystRowId = auth0Data.user_metadata?.catalystRowId
-
-      if (!catalystRowId) {
-        console.warn('catalystRowId non trovato in Auth0 user_metadata')
-        return null
-      }
-
-      return catalystRowId
-    } catch (error) {
-      console.error('Errore ottenendo catalystRowId:', error)
-      return null
-    }
   }
   /**
    * Numero totale di items nel carrello
@@ -122,16 +63,15 @@ export function useCart(options = {}) {
     }
 
     try {
-      // Ottieni catalystRowId
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
+      // Usa catalystRowId dalla cache di useUser
+      if (!catalystRowId.value) {
         toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
         return { success: false, error: 'No catalystRowId' }
       }
 
       // Chiama funzione Catalyst add-to-cart
       const cartItem = await addDomainToCart(
-        catalystRowId,
+        catalystRowId.value,
         domain.domain,
         domain.finalPrice,
         domain.category
@@ -170,18 +110,16 @@ export function useCart(options = {}) {
    */
   async function removeFromCart(domainName) {
     try {
-      // Ottieni catalystRowId
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
+      if (!catalystRowId.value) {
         toastError('Impossibile identificare l\'utente', 3000)
         return
       }
 
       // Chiama funzione Catalyst delete-from-cart
-      await deleteFromCart(catalystRowId, domainName)
+      await deleteFromCart(catalystRowId.value, domainName)
 
       // Ricarica il carrello dal database per evitare inconsistenze
-      const items = await getUserCart(catalystRowId)
+      const items = await getUserCart(catalystRowId.value)
       cartItems.value = items
 
       console.log('✅ Item rimosso dal carrello:', domainName)
@@ -203,15 +141,13 @@ export function useCart(options = {}) {
         return
       }
 
-      // Ottieni catalystRowId
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
+      if (!catalystRowId.value) {
         console.warn('Impossibile caricare carrello: catalystRowId non trovato')
         return
       }
 
       // Chiama funzione Catalyst get-cart
-      const items = await getUserCart(catalystRowId)
+      const items = await getUserCart(catalystRowId.value)
 
       // Aggiorna carrello locale
       cartItems.value = items
@@ -228,9 +164,7 @@ export function useCart(options = {}) {
    */
   async function clearCart() {
     try {
-      // Ottieni catalystRowId
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
+      if (!catalystRowId.value) {
         toastError('Impossibile identificare l\'utente', 3000)
         return
       }
@@ -240,11 +174,11 @@ export function useCart(options = {}) {
 
       if (domainNames.length > 0) {
         // Chiama funzione Catalyst delete-from-cart con tutti i domini
-        await deleteFromCart(catalystRowId, domainNames)
+        await deleteFromCart(catalystRowId.value, domainNames)
       }
 
       // Ricarica il carrello dal database per evitare inconsistenze
-      const items = await getUserCart(catalystRowId)
+      const items = await getUserCart(catalystRowId.value)
       cartItems.value = items
 
       console.log('✅ Carrello svuotato')
@@ -255,24 +189,6 @@ export function useCart(options = {}) {
     }
   }
 
-  /**
-   * Carica i crediti dell'utente
-   */
-  async function loadUserCredits() {
-    try {
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
-        console.warn('Impossibile caricare crediti: catalystRowId non trovato')
-        return
-      }
-
-      const userData = await getUserData(catalystRowId)
-      userCredits.value = parseFloat(userData.credits || 0)
-      console.log('💰 Crediti caricati:', userCredits.value)
-    } catch (error) {
-      console.error('❌ Errore caricando crediti:', error)
-    }
-  }
 
 
   /**
@@ -280,8 +196,7 @@ export function useCart(options = {}) {
    */
   async function handlePayWithCredits() {
     try {
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
+      if (!catalystRowId.value) {
         toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
         return
       }
@@ -290,15 +205,16 @@ export function useCart(options = {}) {
 
       const totalAmount = parseFloat(cartTotal.value)
 
-      const result = await payWithCredits(catalystRowId, cartItems.value, totalAmount)
+      const result = await payWithCredits(catalystRowId.value, cartItems.value, totalAmount)
 
       console.log('✅ Pagamento completato:', result)
 
       // Svuota carrello locale (già svuotato nel backend)
       cartItems.value = []
 
-      // Aggiorna crediti
-      userCredits.value = result.newCreditBalance
+      // Aggiorna crediti usando useUser (sincronizza con tutti i componenti)
+      const { updateCredits } = useUser()
+      updateCredits(result.newCreditBalance)
 
       // Chiudi modal carrello
       showCartModal.value = false
@@ -322,15 +238,14 @@ export function useCart(options = {}) {
    */
   async function handlePayWithStripe() {
     try {
-      const catalystRowId = await getCatalystRowId()
-      if (!catalystRowId) {
+      if (!catalystRowId.value) {
         toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
         return
       }
 
       console.log('🚀 Creazione Stripe Checkout Session...')
 
-      const { checkoutUrl, sessionId } = await createCheckout(catalystRowId, cartItems.value)
+      const { checkoutUrl, sessionId } = await createCheckout(catalystRowId.value, cartItems.value)
 
       console.log('✅ Checkout Session creata:', sessionId)
       console.log('Redirect a:', checkoutUrl)
@@ -349,17 +264,13 @@ export function useCart(options = {}) {
   /**
    * Mostra/nascondi modal carrello
    */
-  async function toggleCartModal() {
+  function toggleCartModal() {
     // Controlla autenticazione prima di aprire il modal
     if (!showCartModal.value && !checkAuthentication()) {
       return
     }
 
-    // Se stiamo aprendo il modal, carica i crediti
-    if (!showCartModal.value) {
-      await loadUserCredits()
-    }
-
+    // I crediti sono già disponibili in useUser, non serve caricarli
     showCartModal.value = !showCartModal.value
   }
 
@@ -367,7 +278,7 @@ export function useCart(options = {}) {
     // State
     cartItems,
     showCartModal,
-    userCredits,
+    userCredits: credits, // Alias per compatibilità con componenti esistenti
 
     // Computed
     cartCount,
@@ -379,7 +290,6 @@ export function useCart(options = {}) {
     loadCart,
     clearCart,
     toggleCartModal,
-    loadUserCredits,
     handlePayWithCredits,
     handlePayWithStripe
   }
