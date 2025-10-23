@@ -294,7 +294,7 @@ export function useCart(options = {}) {
 
       console.log('✅ Pagamento completato:', result)
 
-      // Svuota carrello locale
+      // Svuota carrello locale (già svuotato nel backend)
       cartItems.value = []
 
       // Aggiorna crediti
@@ -303,13 +303,8 @@ export function useCart(options = {}) {
       // Chiudi modal carrello
       showCartModal.value = false
 
-      // Mostra messaggio di successo
-      success(`Ordine completato! ${result.domainsCount} ${result.domainsCount === 1 ? 'dominio acquistato' : 'domini acquistati'}. Nuovo saldo: ${result.newCreditBalance.toFixed(2)} €`, 5000)
-
-      // Redirect alla dashboard dopo 1.5 secondi
-      setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 1500)
+      // Redirect alla pagina success con orderId
+      window.location.href = `/success?order_id=${result.orderId}&type=credits`
 
     } catch (error) {
       console.error('❌ Errore durante pagamento con crediti:', error)
