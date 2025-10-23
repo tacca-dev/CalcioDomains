@@ -430,3 +430,90 @@ export async function getUserOrders(userId) {
     throw error
   }
 }
+
+// ============================================================================
+// RECHARGE MANAGEMENT
+// ============================================================================
+
+/**
+ * Create Stripe Checkout Session for credit recharge
+ * @param {string} userId - User's ROWID
+ * @param {number} amount - Recharge amount in euros
+ * @param {string|null} couponCode - Optional coupon code
+ * @returns {Promise<Object>} Result with checkoutUrl and sessionId
+ */
+export async function createRechargeCheckout(userId, amount, couponCode = null) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/create-recharge-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        amount,
+        couponCode
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to create recharge checkout session')
+    }
+
+    return {
+      checkoutUrl: parsedOutput.checkoutUrl,
+      sessionId: parsedOutput.sessionId
+    }
+  } catch (error) {
+    console.error('Error creating recharge checkout:', error)
+    throw error
+  }
+}
+
+/**
+ * Process recharge after successful Stripe payment
+ * @param {string} userId - User's ROWID
+ * @param {string} stripeSessionId - Stripe session ID
+ * @returns {Promise<Object>} Result with rechargeId, creditsAdded, newBalance
+ */
+export async function processRecharge(userId, stripeSessionId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/process-recharge`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        stripeSessionId
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to process recharge')
+    }
+
+    return {
+      rechargeId: parsedOutput.rechargeId,
+      creditsAdded: parsedOutput.creditsAdded,
+      newBalance: parsedOutput.newBalance
+    }
+  } catch (error) {
+    console.error('Error processing recharge:', error)
+    throw error
+  }
+}

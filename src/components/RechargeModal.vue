@@ -1,0 +1,340 @@
+<template>
+  <div class="modal-overlay" @click.self="$emit('close')">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">⚡ Ricarica Crediti</h2>
+        <button class="close-button" @click="$emit('close')" aria-label="Chiudi">
+          ×
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <p class="modal-description">Seleziona il taglio di ricarica:</p>
+
+        <!-- Packages list -->
+        <div class="packages-list">
+          <label
+            v-for="pkg in packages"
+            :key="pkg.amount"
+            class="package-option"
+            :class="{ selected: selectedPackage?.amount === pkg.amount }"
+          >
+            <input
+              type="radio"
+              name="package"
+              :value="pkg"
+              v-model="selectedPackage"
+              class="package-radio"
+            />
+            <div class="package-content">
+              <div class="package-amount">{{ pkg.amount.toLocaleString('it-IT') }} €</div>
+              <div class="package-info">Ricevi {{ pkg.amount.toLocaleString('it-IT') }} € di crediti</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Coupon input -->
+        <div class="coupon-section">
+          <input
+            type="text"
+            v-model="couponCode"
+            placeholder="Codice coupon (opzionale)"
+            class="coupon-input"
+            disabled
+          />
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="button-secondary" @click="$emit('close')">
+          Annulla
+        </button>
+        <button
+          class="button-primary"
+          @click="handleProceed"
+          :disabled="!selectedPackage || loading"
+        >
+          {{ loading ? 'Caricamento...' : 'Procedi al pagamento →' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+// Emits
+const emit = defineEmits(['close', 'recharge'])
+
+// State
+const selectedPackage = ref(null)
+const couponCode = ref('')
+const loading = ref(false)
+
+// Available packages
+const packages = [
+  { amount: 500 },
+  { amount: 1000 },
+  { amount: 2500 },
+  { amount: 5000 },
+  { amount: 10000 }
+]
+
+// Handle proceed to payment
+const handleProceed = () => {
+  if (!selectedPackage.value) return
+
+  loading.value = true
+  emit('recharge', {
+    amount: selectedPackage.value.amount,
+    coupon: couponCode.value || null
+  })
+}
+</script>
+
+<style scoped>
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Modal content */
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f3f4f6;
+  color: #1a1a1a;
+}
+
+/* Body */
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-description {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+}
+
+/* Packages list */
+.packages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.package-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.package-option:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.package-option.selected {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.package-radio {
+  appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.package-radio:checked {
+  border-color: #10b981;
+  background: #10b981;
+}
+
+.package-radio:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.5rem;
+  height: 0.5rem;
+  background: white;
+  border-radius: 50%;
+}
+
+.package-content {
+  flex: 1;
+}
+
+.package-amount {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+}
+
+.package-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Coupon section */
+.coupon-section {
+  margin-top: 1.5rem;
+}
+
+.coupon-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  transition: all 0.2s ease;
+}
+
+.coupon-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.coupon-input:disabled {
+  background: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Footer */
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.button-secondary,
+.button-primary {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.button-secondary {
+  background: white;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.button-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.button-primary {
+  background: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+}
+
+.button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modal-content {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .button-secondary,
+  .button-primary {
+    width: 100%;
+  }
+}
+</style>

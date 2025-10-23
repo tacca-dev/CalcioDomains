@@ -4,7 +4,7 @@
       <!-- Loading state -->
       <div v-if="processing" class="loading-state">
         <div class="spinner"></div>
-        <p>Processando il tuo ordine...</p>
+        <p>{{ isRecharge ? 'Processando la tua ricarica...' : 'Processando il tuo ordine...' }}</p>
       </div>
 
       <!-- Error state -->
@@ -35,7 +35,7 @@
         </div>
 
         <h1 class="success-title">Pagamento completato!</h1>
-        <p class="success-subtitle">Grazie per il tuo acquisto</p>
+        <p class="success-subtitle">{{ isRecharge ? 'La tua ricarica è stata completata con successo' : 'Grazie per il tuo acquisto' }}</p>
 
         <div v-if="sessionId" class="order-info">
           <p class="info-label">ID Sessione:</p>
@@ -48,8 +48,8 @@
         </div>
 
         <div class="success-actions">
-          <router-link to="/domains" class="btn-primary">Cerca altri domini</router-link>
-          <router-link to="/dashboard" class="btn-secondary">Torna alla dashboard</router-link>
+          <router-link v-if="!isRecharge" to="/domains" class="btn-primary">Cerca altri domini</router-link>
+          <router-link to="/dashboard" class="btn-primary">Torna alla dashboard</router-link>
         </div>
       </div>
     </div>
@@ -60,7 +60,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
-import { createOrder, deleteFromCart, getUserCart } from '@/services/catalyst'
+import { createOrder, deleteFromCart, getUserCart, processRecharge } from '@/services/catalyst'
 import { useCart } from '@/composables/useCart'
 
 const route = useRoute()
@@ -70,6 +70,7 @@ const { loadCart } = useCart({ user, getAccessTokenSilently })
 const sessionId = ref(null)
 const processing = ref(true)
 const error = ref(null)
+const isRecharge = ref(false)
 
 async function getCatalystRowId() {
   try {
@@ -103,6 +104,10 @@ async function getCatalystRowId() {
 
 onMounted(async () => {
   sessionId.value = route.query.session_id || null
+  const paymentType = route.query.type || 'order' // 'order' or 'recharge'
+
+  // Set isRecharge based on payment type BEFORE processing
+  isRecharge.value = paymentType === 'recharge'
 
   if (!sessionId.value) {
     error.value = 'Session ID mancante'
@@ -111,6 +116,7 @@ onMounted(async () => {
   }
 
   console.log('Processing payment success for session:', sessionId.value)
+  console.log('Payment type:', paymentType)
 
   try {
     const catalystRowId = await getCatalystRowId()
@@ -118,10 +124,27 @@ onMounted(async () => {
       throw new Error('Impossibile identificare l\'utente')
     }
 
+    // Handle recharge - process and add credits
+    if (paymentType === 'recharge') {
+      console.log('💳 Processando ricarica...')
+
+      const result = await processRecharge(catalystRowId, sessionId.value)
+
+      console.log('✅ Ricarica completata:', {
+        creditsAdded: result.creditsAdded,
+        newBalance: result.newBalance
+      })
+
+      processing.value = false
+      return
+    }
+
+    // Handle domain order - create order and clear cart
+    console.log('📦 Processando ordine domini...')
     const cartItems = await getUserCart(catalystRowId)
 
     if (!cartItems || cartItems.length === 0) {
-      console.warn('Carrello già vuoto o ordine già processato')
+      console.warn('Carrello vuoto - ordine potrebbe essere già stato processato')
       processing.value = false
       return
     }
@@ -135,19 +158,19 @@ onMounted(async () => {
       cartItems
     )
 
-    console.log('Ordine creato con successo')
+    console.log('✅ Ordine creato con successo')
 
     const domainNames = cartItems.map(item => item.domain_name)
     await deleteFromCart(catalystRowId, domainNames)
 
-    console.log('Carrello svuotato')
+    console.log('✅ Carrello svuotato')
 
     await loadCart()
 
     processing.value = false
   } catch (err) {
-    console.error('Errore processando ordine:', err)
-    error.value = err.message || 'Errore processando l\'ordine'
+    console.error('❌ Errore:', err)
+    error.value = err.message || (isRecharge.value ? 'Errore processando la ricarica' : 'Errore processando l\'ordine')
     processing.value = false
   }
 })

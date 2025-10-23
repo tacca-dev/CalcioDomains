@@ -36,17 +36,15 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-icon">💳</span>
           <span class="stat-label">Crediti</span>
         </div>
-        <div class="stat-value">0 €</div>
+        <div class="stat-value">{{ userCredits.toFixed(2) }} €</div>
         <div class="stat-description">Saldo disponibile</div>
-        <button class="stat-action">💳 Ricarica</button>
+        <button class="stat-action" @click="showRechargeModal = true">💳 Ricarica</button>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-icon">🎁</span>
           <span class="stat-label">COUPON</span>
         </div>
         <div class="stat-value">0</div>
@@ -54,7 +52,6 @@
 
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-icon">🌐</span>
           <span class="stat-label">DOMINI ACQUISTATI</span>
         </div>
         <div class="stat-value">0</div>
@@ -62,7 +59,6 @@
 
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-icon">💰</span>
           <span class="stat-label">TOTALE SPESO</span>
         </div>
         <div class="stat-value">0 €</div>
@@ -71,7 +67,6 @@
 
       <div class="stat-card">
         <div class="stat-header">
-          <span class="stat-icon">📈</span>
           <span class="stat-label">TOTALE VENDUTO</span>
         </div>
         <div class="stat-value">0 €</div>
@@ -176,6 +171,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Recharge Modal -->
+    <RechargeModal
+      v-if="showRechargeModal"
+      @close="showRechargeModal = false"
+      @recharge="handleRecharge"
+    />
   </div>
 </template>
 
@@ -183,9 +185,14 @@
 import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
-import { getUserData, getAvatarUrl, getUserOrders } from '@/services/catalyst'
+import { getUserData, getAvatarUrl, getUserOrders, createRechargeCheckout } from '@/services/catalyst'
+import RechargeModal from '@/components/RechargeModal.vue'
+import { useToast } from '@/composables/useToast'
 
 const { user, getAccessTokenSilently, logout } = useAuth0()
+
+// Toast notifications
+const { error: toastError } = useToast()
 
 // Active tab state
 const activeTab = ref('domini')
@@ -195,6 +202,10 @@ const userName = ref('UTENTE')
 const userAvatar = ref(null)
 const userOrders = ref([])
 const ordersLoading = ref(false)
+const userCredits = ref(0)
+
+// Recharge modal
+const showRechargeModal = ref(false)
 
 // Load user data from Catalyst
 const loadUserData = async () => {
@@ -307,6 +318,58 @@ const handleLogout = () => {
       returnTo: 'https://calciodomains-yqdhfgao.onslate.eu'
     }
   })
+}
+
+// Handle recharge: create checkout session and redirect to Stripe
+const handleRecharge = async (rechargeData) => {
+  try {
+    if (!user.value) {
+      toastError('Devi effettuare il login per ricaricare', 3000)
+      return
+    }
+
+    console.log('🚀 Creazione Stripe Checkout Session per ricarica...', rechargeData)
+
+    // Get catalystRowId from Auth0
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        scope: 'read:current_user'
+      }
+    })
+
+    const auth0Response = await axios.get(
+      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
+
+    if (!catalystRowId) {
+      toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
+      return
+    }
+
+    // Create recharge checkout session
+    const { checkoutUrl, sessionId } = await createRechargeCheckout(
+      catalystRowId,
+      rechargeData.amount,
+      rechargeData.coupon
+    )
+
+    console.log('✅ Recharge Checkout Session creata:', sessionId)
+    console.log('Redirect a:', checkoutUrl)
+
+    // Redirect to Stripe Checkout
+    window.location.href = checkoutUrl
+  } catch (error) {
+    console.error('❌ Errore durante la creazione della ricarica:', error)
+    toastError('Errore creando la sessione di pagamento. Riprova.', 4000)
+  }
 }
 
 // Load user data on mount
