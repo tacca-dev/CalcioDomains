@@ -108,10 +108,46 @@
     <!-- Tab Content -->
     <div class="tab-content">
       <!-- I Miei Domini Tab -->
-      <div v-if="activeTab === 'domini'" class="empty-state">
-        <div class="empty-icon">🔍</div>
-        <h2 class="empty-title">NESSUN DOMINIO BLOCKCHAIN TROVATO</h2>
-        <p class="empty-description">Non hai ancora acquistato nessun dominio blockchain .calcio</p>
+      <div v-if="activeTab === 'domini'">
+        <!-- Loading state -->
+        <div v-if="ordersLoading" class="loading-state">
+          <div class="spinner"></div>
+          <p>Caricamento domini...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="myDomains.length === 0" class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h2 class="empty-title">NESSUN DOMINIO BLOCKCHAIN TROVATO</h2>
+          <p class="empty-description">Non hai ancora acquistato nessun dominio blockchain .calcio</p>
+        </div>
+
+        <!-- Domains grid -->
+        <div v-else class="domains-grid">
+          <div v-for="domain in myDomains" :key="domain.name" class="domain-card">
+            <div class="domain-card-header">
+              <span class="domain-icon">🌐</span>
+              <h3 class="domain-card-name">{{ domain.name }}</h3>
+            </div>
+            <div class="domain-card-body">
+              <div class="domain-info-row">
+                <span class="info-label">Acquistato il:</span>
+                <span class="info-value">{{ formatDate(domain.purchaseDate) }}</span>
+              </div>
+              <div class="domain-info-row">
+                <span class="info-label">Prezzo:</span>
+                <span class="info-value">{{ domain.price.toFixed(2) }} €</span>
+              </div>
+              <div class="domain-info-row">
+                <span class="info-label">Categoria:</span>
+                <span class="info-value">{{ domain.category }}</span>
+              </div>
+            </div>
+            <div class="domain-card-footer">
+              <span class="domain-status">✓ Attivo</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- I Miei Coupons Tab -->
@@ -201,6 +237,7 @@ const activeTab = ref('domini')
 const userName = ref('UTENTE')
 const userAvatar = ref(null)
 const userOrders = ref([])
+const myDomains = ref([])
 const ordersLoading = ref(false)
 const userCredits = ref(0)
 const totalDomainsOwned = ref(0)
@@ -298,29 +335,44 @@ const loadUserOrders = async () => {
     const orders = await getUserOrders(catalystRowId)
     userOrders.value = orders
 
-    // Calculate stats from completed orders only
+    // Calculate stats and extract domains from completed orders only
     if (orders && orders.length > 0) {
       // Count total domains (each order has multiple domains)
       let domainsCount = 0
       let totalAmount = 0
+      const allDomains = []
 
       orders.forEach(order => {
         // Only count domains from completed orders (status = 'paid')
         if (order.domains && Array.isArray(order.domains)) {
           domainsCount += order.domains.length
+
+          // Extract each domain with its info
+          order.domains.forEach(domain => {
+            allDomains.push({
+              name: domain.domain_name,
+              price: parseFloat(domain.price),
+              category: domain.category || 'standard',
+              purchaseDate: order.createdAt,
+              orderId: order.id
+            })
+          })
         }
         totalAmount += parseFloat(order.totalAmount || 0)
       })
 
       totalDomainsOwned.value = domainsCount
       totalSpent.value = totalAmount
+      myDomains.value = allDomains
 
       console.log('✅ Ordini completati:', orders.length)
       console.log('📊 Domini acquistati:', domainsCount)
+      console.log('🌐 Domini estratti:', allDomains.length)
       console.log('💸 Totale speso:', totalAmount.toFixed(2), '€')
     } else {
       totalDomainsOwned.value = 0
       totalSpent.value = 0
+      myDomains.value = []
       console.log('✅ Nessun ordine completato trovato')
     }
   } catch (err) {
@@ -898,5 +950,99 @@ onMounted(() => {
     align-items: flex-start;
     gap: 0.5rem;
   }
+
+  .domains-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Domains Grid */
+.domains-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.domain-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.domain-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.domain-card-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.domain-icon {
+  font-size: 1.5rem;
+}
+
+.domain-card-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  word-break: break-all;
+}
+
+.domain-card-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.domain-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.domain-info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.domain-card-footer {
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.domain-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 </style>
