@@ -122,30 +122,11 @@
           <p class="empty-description">Non hai ancora acquistato nessun dominio blockchain .calcio</p>
         </div>
 
-        <!-- Domains grid -->
-        <div v-else class="domains-grid">
-          <div v-for="domain in myDomains" :key="domain.name" class="domain-card">
-            <div class="domain-card-header">
-              <span class="domain-icon">🌐</span>
-              <h3 class="domain-card-name">{{ domain.name }}</h3>
-            </div>
-            <div class="domain-card-body">
-              <div class="domain-info-row">
-                <span class="info-label">Acquistato il:</span>
-                <span class="info-value">{{ formatDate(domain.purchaseDate) }}</span>
-              </div>
-              <div class="domain-info-row">
-                <span class="info-label">Prezzo:</span>
-                <span class="info-value">{{ domain.price.toFixed(2) }} €</span>
-              </div>
-              <div class="domain-info-row">
-                <span class="info-label">Categoria:</span>
-                <span class="info-value">{{ domain.category }}</span>
-              </div>
-            </div>
-            <div class="domain-card-footer">
-              <span class="domain-status">✓ Attivo</span>
-            </div>
+        <!-- Domains list -->
+        <div v-else class="domains-simple">
+          <div v-for="domain in myDomains" :key="domain.name" class="domain-row-simple">
+            <span class="domain-name-text">{{ domain.name }}</span>
+            <span class="domain-price-text">{{ domain.price.toFixed(2) }} €</span>
           </div>
         </div>
       </div>
@@ -951,98 +932,49 @@ onMounted(() => {
     gap: 0.5rem;
   }
 
-  .domains-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
-/* Domains Grid */
-.domains-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.domain-card {
+/* Domains List - SEMPLICE */
+.domains-simple {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
-  transition: all 0.2s ease;
 }
 
-.domain-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.domain-card-header {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.domain-icon {
-  font-size: 1.5rem;
-}
-
-.domain-card-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: white;
-  margin: 0;
-  word-break: break-all;
-}
-
-.domain-card-body {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.domain-info-row {
+.domain-row-simple {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.domain-info-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.info-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.info-value {
-  font-size: 0.875rem;
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
-.domain-card-footer {
   padding: 1rem 1.25rem;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.domain-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  background: #d1fae5;
-  color: #065f46;
-  border-radius: 4px;
-  font-size: 0.875rem;
+.domain-row-simple:last-child {
+  border-bottom: none;
+}
+
+.domain-row-simple:hover {
+  background: #f9fafb;
+}
+
+.domain-name-text {
+  font-size: 1rem;
   font-weight: 500;
+  color: #1a1a1a;
+}
+
+.domain-price-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+@media (max-width: 768px) {
+  .domain-row-simple {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 </style>
