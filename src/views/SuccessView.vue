@@ -42,7 +42,7 @@
           <p class="info-value">{{ sessionId }}</p>
         </div>
 
-        <div class="test-notice">
+        <div v-if="!isCreditsPayment" class="test-notice">
           <p>⚠️ <strong>TEST MODE</strong></p>
           <p>Nessun addebito reale è stato effettuato. Questo è un pagamento di test su Stripe.</p>
         </div>
@@ -71,6 +71,7 @@ const sessionId = ref(null)
 const processing = ref(true)
 const error = ref(null)
 const isRecharge = ref(false)
+const isCreditsPayment = ref(false)
 
 async function getCatalystRowId() {
   try {
@@ -104,11 +105,27 @@ async function getCatalystRowId() {
 
 onMounted(async () => {
   sessionId.value = route.query.session_id || null
-  const paymentType = route.query.type || 'order' // 'order' or 'recharge'
+  const orderId = route.query.order_id || null
+  const paymentType = route.query.type || 'order' // 'order', 'recharge', or 'credits'
 
   // Set isRecharge based on payment type BEFORE processing
   isRecharge.value = paymentType === 'recharge'
 
+  // For credits payment, we have order_id instead of session_id
+  if (paymentType === 'credits') {
+    if (!orderId) {
+      error.value = 'Order ID mancante'
+      processing.value = false
+      return
+    }
+    console.log('Processing credits payment for order:', orderId)
+    // Credits payment is already complete, just show success
+    isCreditsPayment.value = true
+    processing.value = false
+    return
+  }
+
+  // For Stripe payments (order or recharge), we need session_id
   if (!sessionId.value) {
     error.value = 'Session ID mancante'
     processing.value = false
