@@ -54,14 +54,14 @@
         <div class="stat-header">
           <span class="stat-label">DOMINI ACQUISTATI</span>
         </div>
-        <div class="stat-value">0</div>
+        <div class="stat-value">{{ totalDomainsOwned }}</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">TOTALE SPESO</span>
         </div>
-        <div class="stat-value">0 €</div>
+        <div class="stat-value">{{ totalSpent.toFixed(2) }} €</div>
         <div class="stat-description">Acquisti e spese totali</div>
       </div>
 
@@ -203,6 +203,8 @@ const userAvatar = ref(null)
 const userOrders = ref([])
 const ordersLoading = ref(false)
 const userCredits = ref(0)
+const totalDomainsOwned = ref(0)
+const totalSpent = ref(0)
 
 // Recharge modal
 const showRechargeModal = ref(false)
@@ -292,11 +294,35 @@ const loadUserOrders = async () => {
       return
     }
 
-    // Fetch orders
+    // Fetch orders (getUserOrders returns only 'paid' orders)
     const orders = await getUserOrders(catalystRowId)
     userOrders.value = orders
 
-    console.log('✅ Ordini caricati:', orders.length)
+    // Calculate stats from completed orders only
+    if (orders && orders.length > 0) {
+      // Count total domains (each order has multiple domains)
+      let domainsCount = 0
+      let totalAmount = 0
+
+      orders.forEach(order => {
+        // Only count domains from completed orders (status = 'paid')
+        if (order.domains && Array.isArray(order.domains)) {
+          domainsCount += order.domains.length
+        }
+        totalAmount += parseFloat(order.totalAmount || 0)
+      })
+
+      totalDomainsOwned.value = domainsCount
+      totalSpent.value = totalAmount
+
+      console.log('✅ Ordini completati:', orders.length)
+      console.log('📊 Domini acquistati:', domainsCount)
+      console.log('💸 Totale speso:', totalAmount.toFixed(2), '€')
+    } else {
+      totalDomainsOwned.value = 0
+      totalSpent.value = 0
+      console.log('✅ Nessun ordine completato trovato')
+    }
   } catch (err) {
     console.error('Error loading user orders:', err)
   } finally {
