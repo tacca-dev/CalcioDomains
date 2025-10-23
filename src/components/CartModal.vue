@@ -94,8 +94,16 @@
 
         <div class="footer-actions">
           <button class="clear-button" @click="handleClearCart">Svuota carrello</button>
-          <button class="checkout-button" @click="handleCheckout">
-            Paga con Stripe (TEST)
+          <button
+            class="checkout-button credit-button"
+            @click="handlePayWithCredits"
+            :disabled="userCredits < parseFloat(cartTotal)"
+            :title="userCredits < parseFloat(cartTotal) ? 'Credito insufficiente' : 'Paga con il tuo credito'"
+          >
+            Paga con Credito ({{ userCredits.toFixed(2) }} €)
+          </button>
+          <button class="checkout-button stripe-button" @click="handlePayWithStripe">
+            Paga con Carta
           </button>
         </div>
       </div>
@@ -119,9 +127,11 @@ const {
   cartTotal,
   removeFromCart,
   clearCart,
-  checkout,
   toggleCartModal,
-  loadCart
+  loadCart,
+  userCredits,
+  handlePayWithCredits,
+  handlePayWithStripe
 } = useCart({
   isAuthenticated,
   login: loginWithRedirect,
@@ -147,10 +157,6 @@ async function handleClearCart() {
   if (confirm('Sei sicuro di voler svuotare il carrello?')) {
     await clearCart()
   }
-}
-
-async function handleCheckout() {
-  await checkout()
 }
 </script>
 
@@ -351,17 +357,34 @@ async function handleCheckout() {
 
 .checkout-button {
   padding: 0.75rem 1rem;
-  background-color: #22c55e;
   color: white;
   border: none;
   border-radius: 4px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
-.checkout-button:hover {
+.credit-button {
+  background-color: #3b82f6;
+}
+
+.credit-button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.credit-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.stripe-button {
+  background-color: #22c55e;
+}
+
+.stripe-button:hover {
   background-color: #16a34a;
 }
 

@@ -1,10 +1,11 @@
 import { ref, computed } from 'vue'
 import { useToast } from './useToast'
-import { addDomainToCart, getUserCart, deleteFromCart, createCheckout } from '@/services/catalyst'
+import { addDomainToCart, getUserCart, deleteFromCart, createCheckout, payWithCredits, getUserData } from '@/services/catalyst'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
 const showCartModal = ref(false)
+const userCredits = ref(0)
 
 // Toast globale
 const { warning, success, error: toastError } = useToast()
@@ -255,18 +256,76 @@ export function useCart(options = {}) {
   }
 
   /**
-   * Procedi al checkout con Stripe
+   * Carica i crediti dell'utente
    */
-  async function checkout() {
-    if (!checkAuthentication()) {
-      return
-    }
+  async function loadUserCredits() {
+    try {
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        console.warn('Impossibile caricare crediti: catalystRowId non trovato')
+        return
+      }
 
-    if (cartItems.value.length === 0) {
-      toastError('Il carrello è vuoto', 3000)
-      return
+      const userData = await getUserData(catalystRowId)
+      userCredits.value = parseFloat(userData.credits || 0)
+      console.log('💰 Crediti caricati:', userCredits.value)
+    } catch (error) {
+      console.error('❌ Errore caricando crediti:', error)
     }
+  }
 
+
+  /**
+   * Paga con crediti
+   */
+  async function handlePayWithCredits() {
+    try {
+      const catalystRowId = await getCatalystRowId()
+      if (!catalystRowId) {
+        toastError('Impossibile identificare l\'utente. Riprova ad effettuare il login.', 4000)
+        return
+      }
+
+      console.log('💰 Pagamento con crediti in corso...')
+
+      const totalAmount = parseFloat(cartTotal.value)
+
+      const result = await payWithCredits(catalystRowId, cartItems.value, totalAmount)
+
+      console.log('✅ Pagamento completato:', result)
+
+      // Svuota carrello locale
+      cartItems.value = []
+
+      // Aggiorna crediti
+      userCredits.value = result.newCreditBalance
+
+      // Chiudi modal carrello
+      showCartModal.value = false
+
+      // Mostra messaggio di successo
+      success(`Ordine completato! ${result.domainsCount} ${result.domainsCount === 1 ? 'dominio acquistato' : 'domini acquistati'}. Nuovo saldo: ${result.newCreditBalance.toFixed(2)} €`, 5000)
+
+      // Redirect alla dashboard dopo 1.5 secondi
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 1500)
+
+    } catch (error) {
+      console.error('❌ Errore durante pagamento con crediti:', error)
+
+      if (error.message && error.message.includes('Insufficient credits')) {
+        toastError('Crediti insufficienti per completare l\'acquisto', 4000)
+      } else {
+        toastError('Errore processando il pagamento. Riprova.', 4000)
+      }
+    }
+  }
+
+  /**
+   * Paga con Stripe
+   */
+  async function handlePayWithStripe() {
     try {
       const catalystRowId = await getCatalystRowId()
       if (!catalystRowId) {
@@ -281,9 +340,13 @@ export function useCart(options = {}) {
       console.log('✅ Checkout Session creata:', sessionId)
       console.log('Redirect a:', checkoutUrl)
 
+      // Chiudi modal carrello
+      showCartModal.value = false
+
+      // Redirect a Stripe
       window.location.href = checkoutUrl
     } catch (error) {
-      console.error('❌ Errore durante checkout:', error)
+      console.error('❌ Errore durante checkout Stripe:', error)
       toastError('Errore creando la sessione di pagamento. Riprova.', 4000)
     }
   }
@@ -291,11 +354,17 @@ export function useCart(options = {}) {
   /**
    * Mostra/nascondi modal carrello
    */
-  function toggleCartModal() {
+  async function toggleCartModal() {
     // Controlla autenticazione prima di aprire il modal
     if (!showCartModal.value && !checkAuthentication()) {
       return
     }
+
+    // Se stiamo aprendo il modal, carica i crediti
+    if (!showCartModal.value) {
+      await loadUserCredits()
+    }
+
     showCartModal.value = !showCartModal.value
   }
 
@@ -303,6 +372,7 @@ export function useCart(options = {}) {
     // State
     cartItems,
     showCartModal,
+    userCredits,
 
     // Computed
     cartCount,
@@ -313,7 +383,9 @@ export function useCart(options = {}) {
     removeFromCart,
     loadCart,
     clearCart,
-    checkout,
-    toggleCartModal
+    toggleCartModal,
+    loadUserCredits,
+    handlePayWithCredits,
+    handlePayWithStripe
   }
 }

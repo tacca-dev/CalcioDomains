@@ -517,3 +517,48 @@ export async function processRecharge(userId, stripeSessionId) {
     throw error
   }
 }
+
+/**
+ * Pay for order using user's credit balance
+ * @param {string} userId - User's ROWID
+ * @param {Array} cartItems - Array of cart items
+ * @param {number} totalAmount - Total amount in euros
+ * @returns {Promise<Object>} Result with orderId, newCreditBalance
+ */
+export async function payWithCredits(userId, cartItems, totalAmount) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/pay-with-credits`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId,
+        cartItems,
+        totalAmount
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to process payment with credits')
+    }
+
+    return {
+      orderId: parsedOutput.orderId,
+      previousBalance: parsedOutput.previousBalance,
+      amountCharged: parsedOutput.amountCharged,
+      newCreditBalance: parsedOutput.newCreditBalance,
+      domainsCount: parsedOutput.domainsCount
+    }
+  } catch (error) {
+    console.error('Error paying with credits:', error)
+    throw error
+  }
+}
