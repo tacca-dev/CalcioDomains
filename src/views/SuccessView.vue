@@ -62,10 +62,12 @@ import { useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { createOrder, deleteFromCart, getUserCart, processRecharge } from '@/services/catalyst'
 import { useCart } from '@/composables/useCart'
+import { useUser } from '@/composables/useUser'
 
 const route = useRoute()
 const { user, getAccessTokenSilently } = useAuth0()
 const { loadCart } = useCart({ user, getAccessTokenSilently })
+const { updateCredits, addCoupon } = useUser()
 
 const sessionId = ref(null)
 const processing = ref(true)
@@ -155,10 +157,30 @@ onMounted(async () => {
       } else {
         console.log('✅ Ricarica completata:', {
           creditsAdded: result.creditsAdded,
-          newBalance: result.newBalance
+          newBalance: result.newBalance,
+          bonusCoupon: result.bonusCoupon || 'none'
         })
-      }
 
+        // Update credits in useUser composable
+        updateCredits(result.newBalance)
+
+        // If first recharge bonus coupon was created, add it to user state
+        if (result.bonusCoupon) {
+          console.log('🎁 Bonus coupon ricevuto:', result.bonusCoupon.couponCode)
+
+          // Add coupon to user state (format matches get-user-coupons response)
+          addCoupon({
+            id: null, // Will be set by database
+            stripeCouponId: result.bonusCoupon.stripeCouponId,
+            couponCode: result.bonusCoupon.couponCode,
+            amount: result.bonusCoupon.amount,
+            status: 'available',
+            createdAt: new Date().toISOString(),
+            usedAt: null,
+            expiresAt: null
+          })
+        }
+      }
       processing.value = false
       return
     }

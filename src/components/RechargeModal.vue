@@ -11,7 +11,10 @@
 
       <!-- Body -->
       <div class="modal-body">
-        <p class="modal-description">Seleziona il taglio di ricarica:</p>
+        <p class="modal-description">
+          Seleziona il taglio di ricarica
+          <span v-if="firstRechargeBonusAvailable" class="bonus-note">• Prima ricarica: +50% bonus</span>
+        </p>
 
         <!-- Packages list -->
         <div class="packages-list">
@@ -30,20 +33,14 @@
             />
             <div class="package-content">
               <div class="package-amount">{{ pkg.amount.toLocaleString('it-IT') }} €</div>
-              <div class="package-info">Ricevi {{ pkg.amount.toLocaleString('it-IT') }} € di crediti</div>
+              <div class="package-info">
+                {{ pkg.amount.toLocaleString('it-IT') }} € crediti
+                <span v-if="firstRechargeBonusAvailable">
+                  + {{ (pkg.amount * 0.5).toLocaleString('it-IT') }} € coupon
+                </span>
+              </div>
             </div>
           </label>
-        </div>
-
-        <!-- Coupon input -->
-        <div class="coupon-section">
-          <input
-            type="text"
-            v-model="couponCode"
-            placeholder="Codice coupon (opzionale)"
-            class="coupon-input"
-            disabled
-          />
         </div>
       </div>
 
@@ -66,9 +63,13 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useUser } from '@/composables/useUser'
 
 // Emits
 const emit = defineEmits(['close', 'recharge'])
+
+// User data (to check first recharge bonus eligibility)
+const { firstRechargeBonusAvailable } = useUser()
 
 // State
 const selectedPackage = ref(null)
@@ -172,6 +173,11 @@ const handleProceed = () => {
   margin: 0 0 1.5rem 0;
 }
 
+.bonus-note {
+  color: #10b981;
+  font-weight: 500;
+}
+
 /* Packages list */
 .packages-list {
   display: flex;
@@ -245,33 +251,6 @@ const handleProceed = () => {
 .package-info {
   font-size: 0.875rem;
   color: #6b7280;
-}
-
-/* Coupon section */
-.coupon-section {
-  margin-top: 1.5rem;
-}
-
-.coupon-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  color: #1a1a1a;
-  transition: all 0.2s ease;
-}
-
-.coupon-input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.coupon-input:disabled {
-  background: #f9fafb;
-  color: #9ca3af;
-  cursor: not-allowed;
 }
 
 /* Footer */

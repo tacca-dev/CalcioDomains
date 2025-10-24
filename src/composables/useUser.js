@@ -1,5 +1,5 @@
-import { ref, readonly } from 'vue'
-import { getUserData } from '@/services/catalyst'
+import { ref, readonly, computed } from 'vue'
+import { getUserData, getUserCoupons } from '@/services/catalyst'
 
 // ============================================
 // STATE GLOBALE (condiviso tra tutti i componenti)
@@ -16,6 +16,10 @@ const credits = ref(0)
 const avatar = ref(null)
 const stripeCustomerId = ref(null)
 
+// Coupon management
+const availableCoupons = ref([])
+const firstRechargeBonusAvailable = ref(false)
+
 // Flags
 const isInitialized = ref(false)
 const isInitializing = ref(false)
@@ -28,6 +32,13 @@ const isInitializing = ref(false)
  * - Garantisce consistenza tra frontend e database
  */
 export function useUser() {
+  /**
+   * Computed: numero di coupon disponibili (status = 'available')
+   */
+  const availableCouponsCount = computed(() =>
+    availableCoupons.value.filter(c => c.status === 'available').length
+  )
+
   /**
    * Ottieni catalystRowId da Auth0 user metadata
    * Questa funzione viene chiamata UNA SOLA VOLTA per sessione
@@ -106,7 +117,11 @@ export function useUser() {
       console.log('🔄 Caricamento dati utente dal database...')
       const userData = await getUserData(rowId)
 
-      // 3. Salva TUTTO in memoria per l'intera sessione
+      // 3. Carica i coupon utente
+      console.log('🔄 Caricamento coupon utente...')
+      const coupons = await getUserCoupons(rowId)
+
+      // 4. Salva TUTTO in memoria per l'intera sessione
       catalystRowId.value = rowId
       email.value = userData.email
       name.value = userData.name
@@ -115,12 +130,18 @@ export function useUser() {
       avatar.value = userData.avatar_file_id
       stripeCustomerId.value = userData.stripe_customer_id
 
+      // Coupon data
+      availableCoupons.value = coupons
+      firstRechargeBonusAvailable.value = !userData.first_recharge_bonus_claimed
+
       isInitialized.value = true
 
       console.log('✅ Dati utente inizializzati e salvati in memoria:', {
         catalystRowId: rowId,
         email: email.value,
-        credits: credits.value
+        credits: credits.value,
+        coupons: coupons.length,
+        firstRechargeBonusAvailable: firstRechargeBonusAvailable.value
       })
     } catch (error) {
       console.error('❌ Errore durante inizializzazione:', error)
@@ -164,6 +185,17 @@ export function useUser() {
   }
 
   /**
+   * Aggiunge un nuovo coupon alla lista (chiamato dopo first recharge bonus)
+   *
+   * @param {Object} newCoupon - Nuovo coupon da aggiungere
+   */
+  function addCoupon(newCoupon) {
+    availableCoupons.value.unshift(newCoupon) // Aggiungi in testa (più recente)
+    firstRechargeBonusAvailable.value = false // Bonus claimed
+    console.log('🎁 Nuovo coupon aggiunto:', newCoupon.couponCode)
+  }
+
+  /**
    * Pulisce tutti i dati (chiamato al logout)
    */
   function clearAll() {
@@ -174,6 +206,8 @@ export function useUser() {
     credits.value = 0
     avatar.value = null
     stripeCustomerId.value = null
+    availableCoupons.value = []
+    firstRechargeBonusAvailable.value = false
     isInitialized.value = false
     isInitializing.value = false
     console.log('🧹 Dati utente puliti')
@@ -201,6 +235,11 @@ export function useUser() {
     credits,
     avatar,
 
+    // Coupon state
+    availableCoupons: readonly(availableCoupons),
+    availableCouponsCount,
+    firstRechargeBonusAvailable: readonly(firstRechargeBonusAvailable),
+
     // Flags
     isInitialized: readonly(isInitialized),
     isInitializing: readonly(isInitializing),
@@ -210,6 +249,7 @@ export function useUser() {
     updateCredits,
     updateAvatar,
     updateNickname,
+    addCoupon,
     clearAll,
     forceReload
   }

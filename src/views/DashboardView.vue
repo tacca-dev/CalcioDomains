@@ -47,7 +47,7 @@
         <div class="stat-header">
           <span class="stat-label">COUPON</span>
         </div>
-        <div class="stat-value">0</div>
+        <div class="stat-value">{{ availableCouponsCount }}</div>
       </div>
 
       <div class="stat-card">
@@ -132,10 +132,21 @@
       </div>
 
       <!-- I Miei Coupons Tab -->
-      <div v-if="activeTab === 'coupons'" class="empty-state">
-        <div class="empty-icon">🎁</div>
-        <h2 class="empty-title">NESSUN COUPON DISPONIBILE</h2>
-        <p class="empty-description">Non hai ancora ricevuto nessun coupon sconto</p>
+      <div v-if="activeTab === 'coupons'">
+        <!-- Empty state -->
+        <div v-if="availableCoupons.length === 0" class="empty-state">
+          <div class="empty-icon">🎁</div>
+          <h2 class="empty-title">NESSUN COUPON DISPONIBILE</h2>
+          <p class="empty-description">Non hai ancora ricevuto nessun coupon sconto</p>
+        </div>
+
+        <!-- Coupons list -->
+        <div v-else class="domains-simple">
+          <div v-for="coupon in availableCoupons" :key="coupon.id" class="domain-row-simple">
+            <span class="domain-name-text">{{ coupon.couponCode }}</span>
+            <span class="domain-price-text">{{ coupon.amount.toFixed(2) }} €</span>
+          </div>
+        </div>
       </div>
 
       <!-- Operazioni Tab -->
@@ -205,11 +216,15 @@ import axios from 'axios'
 import { getUserData, getAvatarUrl, getUserOrders, createRechargeCheckout } from '@/services/catalyst'
 import RechargeModal from '@/components/RechargeModal.vue'
 import { useToast } from '@/composables/useToast'
+import { useUser } from '@/composables/useUser'
 
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
 // Toast notifications
 const { error: toastError } = useToast()
+
+// User composable (for coupons)
+const { availableCoupons, availableCouponsCount } = useUser()
 
 // Active tab state
 const activeTab = ref('domini')

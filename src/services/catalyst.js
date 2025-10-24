@@ -562,3 +562,30 @@ export async function payWithCredits(userId, cartItems, totalAmount) {
     throw error
   }
 }
+
+/**
+ * Get user coupons
+ * @param {string} userId - Catalyst user ROWID
+ * @returns {Promise<Array>} - Array of coupon objects
+ */
+export async function getUserCoupons(userId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-user-coupons`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to retrieve coupons')
+    }
+
+    return parsedOutput.coupons
+  } catch (error) {
+    console.error('Error getting user coupons:', error)
+    throw error
+  }
+}
