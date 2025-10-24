@@ -134,7 +134,7 @@
       <!-- I Miei Coupons Tab -->
       <div v-if="activeTab === 'coupons'">
         <!-- Empty state -->
-        <div v-if="availableCoupons.length === 0" class="empty-state">
+        <div v-if="userCoupons.length === 0" class="empty-state">
           <div class="empty-icon">🎁</div>
           <h2 class="empty-title">NESSUN COUPON DISPONIBILE</h2>
           <p class="empty-description">Non hai ancora ricevuto nessun coupon sconto</p>
@@ -142,7 +142,7 @@
 
         <!-- Coupons list -->
         <div v-else class="domains-simple">
-          <div v-for="coupon in availableCoupons" :key="coupon.id" class="domain-row-simple">
+          <div v-for="coupon in userCoupons" :key="coupon.id" class="domain-row-simple">
             <span class="domain-name-text">{{ coupon.couponCode }}</span>
             <span class="domain-price-text">{{ coupon.amount.toFixed(2) }} €</span>
           </div>
@@ -210,21 +210,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
-import { getUserData, getAvatarUrl, getUserOrders, createRechargeCheckout } from '@/services/catalyst'
+import { getUserData, getAvatarUrl, getUserOrders, createRechargeCheckout, getUserCoupons } from '@/services/catalyst'
 import RechargeModal from '@/components/RechargeModal.vue'
 import { useToast } from '@/composables/useToast'
-import { useUser } from '@/composables/useUser'
-
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
 // Toast notifications
 const { error: toastError } = useToast()
-
-// User composable (for coupons)
-const { availableCoupons, availableCouponsCount, initialize: initializeUser } = useUser()
 
 // Active tab state
 const activeTab = ref('domini')
@@ -234,10 +229,14 @@ const userName = ref('UTENTE')
 const userAvatar = ref(null)
 const userOrders = ref([])
 const myDomains = ref([])
+const userCoupons = ref([])
 const ordersLoading = ref(false)
 const userCredits = ref(0)
 const totalDomainsOwned = ref(0)
 const totalSpent = ref(0)
+
+// Computed: coupon count
+const availableCouponsCount = computed(() => userCoupons.value.filter(c => c.status === 'available').length)
 
 // Recharge modal
 const showRechargeModal = ref(false)
@@ -293,6 +292,45 @@ const loadUserData = async () => {
     if (user.value) {
       userName.value = (user.value.name || user.value.nickname || user.value.email || 'UTENTE').toUpperCase()
     }
+  }
+}
+
+// Load user coupons
+const loadUserCoupons = async () => {
+  try {
+    if (!user.value) return
+
+    // Get catalystRowId from Auth0
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        scope: 'read:current_user'
+      }
+    })
+
+    const auth0Response = await axios.get(
+      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+
+    const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
+
+    if (!catalystRowId) {
+      console.warn('catalystRowId non trovato')
+      return
+    }
+
+    // Fetch coupons
+    const coupons = await getUserCoupons(catalystRowId)
+    userCoupons.value = coupons
+
+    console.log('🎁 Coupon caricati:', coupons.length)
+  } catch (err) {
+    console.error('Error loading user coupons:', err)
   }
 }
 
@@ -455,13 +493,9 @@ const handleRecharge = async (rechargeData) => {
 
 // Load user data on mount
 onMounted(() => {
-  // Initialize useUser composable in background (loads coupons)
-  initializeUser(user.value, getAccessTokenSilently).catch(err => {
-    console.error('Error initializing user composable:', err)
-  })
-
   loadUserData()
   loadUserOrders()
+  loadUserCoupons()
 })
 </script>
 
