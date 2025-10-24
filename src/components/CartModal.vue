@@ -203,6 +203,7 @@ const {
   clearCart,
   toggleCartModal,
   loadCart,
+  loadCoupons,
   userCredits,
   handlePayWithCredits,
   handlePayWithStripe,
@@ -222,17 +223,19 @@ const {
   getAccessTokenSilently
 })
 
-// Carica il carrello quando l'utente è autenticato
+// Carica il carrello e i coupon quando l'utente è autenticato
 onMounted(() => {
   if (isAuthenticated.value && user.value) {
     loadCart()
+    loadCoupons()
   }
 })
 
-// Carica il carrello quando l'utente si autentica o quando user diventa disponibile
+// Carica il carrello e i coupon quando l'utente si autentica o quando user diventa disponibile
 watch([isAuthenticated, user], ([authenticated, userValue]) => {
   if (authenticated && userValue) {
     loadCart()
+    loadCoupons()
   }
 })
 
