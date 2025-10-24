@@ -454,9 +454,11 @@ const handleRecharge = async (rechargeData) => {
 }
 
 // Load user data on mount
-onMounted(async () => {
-  // Initialize useUser composable (loads coupons and user data)
-  await initializeUser(user.value, getAccessTokenSilently)
+onMounted(() => {
+  // Initialize useUser composable in background (loads coupons)
+  initializeUser(user.value, getAccessTokenSilently).catch(err => {
+    console.error('Error initializing user composable:', err)
+  })
 
   loadUserData()
   loadUserOrders()
