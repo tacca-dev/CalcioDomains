@@ -224,7 +224,7 @@ const { user, getAccessTokenSilently, logout } = useAuth0()
 const { error: toastError } = useToast()
 
 // User composable (for coupons)
-const { availableCoupons, availableCouponsCount } = useUser()
+const { availableCoupons, availableCouponsCount, initialize: initializeUser } = useUser()
 
 // Active tab state
 const activeTab = ref('domini')
@@ -454,7 +454,10 @@ const handleRecharge = async (rechargeData) => {
 }
 
 // Load user data on mount
-onMounted(() => {
+onMounted(async () => {
+  // Initialize useUser composable (loads coupons and user data)
+  await initializeUser(user.value, getAccessTokenSilently)
+
   loadUserData()
   loadUserOrders()
 })
