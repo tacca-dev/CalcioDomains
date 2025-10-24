@@ -35,8 +35,8 @@
               <div class="package-amount">{{ pkg.amount.toLocaleString('it-IT') }} €</div>
               <div class="package-info">
                 {{ pkg.amount.toLocaleString('it-IT') }} € crediti
-                <span v-if="firstRechargeBonusAvailable">
-                  + {{ (pkg.amount * 0.5).toLocaleString('it-IT') }} € coupon
+                <span v-if="getBonusAmount(pkg.amount) > 0">
+                  + {{ getBonusAmount(pkg.amount).toLocaleString('it-IT') }} € coupon
                 </span>
               </div>
             </div>
@@ -84,6 +84,27 @@ const packages = [
   { amount: 5000 },
   { amount: 10000 }
 ]
+
+// Calculate bonus amount based on recharge amount and user status
+const getBonusAmount = (amount) => {
+  // First recharge: 50% bonus for all amounts
+  if (firstRechargeBonusAvailable.value) {
+    return amount * 0.5
+  }
+
+  // Subsequent recharges: progressive bonus
+  // 500€=0%, 1000€=5%, 2500€=10%, 5000€=15%, 10000€=20%
+  const bonusPercentages = {
+    500: 0,
+    1000: 5,
+    2500: 10,
+    5000: 15,
+    10000: 20
+  }
+
+  const percentage = bonusPercentages[amount] || 0
+  return amount * (percentage / 100)
+}
 
 // Handle proceed to payment
 const handleProceed = () => {
