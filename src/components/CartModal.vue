@@ -186,12 +186,16 @@
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { watch } from 'vue'
 import { useCart } from '@/composables/useCart'
+import { useUser } from '@/composables/useUser'
 import { useAuth0 } from '@auth0/auth0-vue'
 
 // Auth0
 const { isAuthenticated, loginWithRedirect, user, getAccessTokenSilently } = useAuth0()
+
+// User composable per sapere quando i dati sono pronti
+const { isInitialized } = useUser()
 
 // Composable carrello con autenticazione
 const {
@@ -223,21 +227,14 @@ const {
   getAccessTokenSilently
 })
 
-// Carica il carrello e i coupon quando l'utente è autenticato
-onMounted(() => {
-  if (isAuthenticated.value && user.value) {
+// Carica il carrello quando useUser è inizializzato
+watch(isInitialized, (initialized) => {
+  if (initialized && isAuthenticated.value) {
+    console.log('🔄 useUser inizializzato, carico carrello e coupon...')
     loadCart()
     loadCoupons()
   }
-})
-
-// Carica il carrello e i coupon quando l'utente si autentica o quando user diventa disponibile
-watch([isAuthenticated, user], ([authenticated, userValue]) => {
-  if (authenticated && userValue) {
-    loadCart()
-    loadCoupons()
-  }
-})
+}, { immediate: true })
 
 async function handleClearCart() {
   if (confirm('Sei sicuro di voler svuotare il carrello?')) {
