@@ -15,7 +15,8 @@ const { initialize, isInitialized } = useUser()
 
 // Inizializza i dati utente quando l'utente fa login
 watch([isAuthenticated, user], async ([authenticated, userData]) => {
-  if (authenticated && userData && !isInitialized.value) {
+  // Verifica che user.sub esista (Auth0 completamente caricato)
+  if (authenticated && userData?.sub && !isInitialized.value) {
     try {
       console.log('🚀 Inizializzazione dati utente globali...')
       await initialize(userData, getAccessTokenSilently)
