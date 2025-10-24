@@ -1,11 +1,14 @@
 import { ref, computed } from 'vue'
 import { useToast } from './useToast'
 import { useUser } from './useUser'
-import { addDomainToCart, getUserCart, deleteFromCart, createCheckout, payWithCredits } from '@/services/catalyst'
+import { addDomainToCart, getUserCart, deleteFromCart, createCheckout, payWithCredits, getUserCoupons } from '@/services/catalyst'
 
 // Stato globale del carrello (condiviso tra tutti i componenti)
 const cartItems = ref([])
 const showCartModal = ref(false)
+const availableCoupons = ref([])
+const selectedCoupon = ref(null)
+const convertRestToCredit = ref(true) // Default: converti resto in credito
 
 // Toast globale
 const { warning, success, error: toastError } = useToast()
@@ -50,6 +53,46 @@ export function useCart(options = {}) {
   const cartTotal = computed(() => {
     const total = cartItems.value.reduce((sum, item) => sum + item.price, 0)
     return total.toFixed(2)
+  })
+
+  /**
+   * Importo sconto coupon applicato
+   */
+  const discountAmount = computed(() => {
+    if (!selectedCoupon.value) return 0
+    const total = parseFloat(cartTotal.value)
+    return Math.min(selectedCoupon.value.amount, total)
+  })
+
+  /**
+   * Coupon eccede totale?
+   */
+  const couponExceedsTotal = computed(() => {
+    if (!selectedCoupon.value) return false
+    return selectedCoupon.value.amount > parseFloat(cartTotal.value)
+  })
+
+  /**
+   * Importo in eccesso del coupon
+   */
+  const excessAmount = computed(() => {
+    if (!couponExceedsTotal.value) return 0
+    return selectedCoupon.value.amount - parseFloat(cartTotal.value)
+  })
+
+  /**
+   * Credito bonus da eccesso coupon
+   */
+  const creditBonus = computed(() => {
+    return convertRestToCredit.value ? excessAmount.value : 0
+  })
+
+  /**
+   * Totale finale da pagare (dopo sconto coupon)
+   */
+  const finalTotal = computed(() => {
+    const total = parseFloat(cartTotal.value)
+    return Math.max(0, total - discountAmount.value)
   })
 
   /**
@@ -153,8 +196,32 @@ export function useCart(options = {}) {
       cartItems.value = items
 
       console.log('✅ Carrello caricato:', items.length, 'items')
+
+      // Carica anche i coupon disponibili
+      await loadCoupons()
     } catch (error) {
       console.error('❌ Errore caricando carrello:', error)
+      // Non mostrare toast - il caricamento è silenzioso
+    }
+  }
+
+  /**
+   * Carica coupon disponibili dal backend
+   */
+  async function loadCoupons() {
+    try {
+      if (!catalystRowId.value) {
+        console.warn('Impossibile caricare coupon: catalystRowId non trovato')
+        return
+      }
+
+      // Carica solo coupon con status 'available'
+      const coupons = await getUserCoupons(catalystRowId.value)
+      availableCoupons.value = coupons.filter(c => c.status === 'available')
+
+      console.log('✅ Coupon caricati:', availableCoupons.value.length, 'disponibili')
+    } catch (error) {
+      console.error('❌ Errore caricando coupon:', error)
       // Non mostrare toast - il caricamento è silenzioso
     }
   }
@@ -205,12 +272,25 @@ export function useCart(options = {}) {
 
       const totalAmount = parseFloat(cartTotal.value)
 
-      const result = await payWithCredits(catalystRowId.value, cartItems.value, totalAmount)
+      // Passa coupon selezionato e flag conversione resto
+      const result = await payWithCredits(
+        catalystRowId.value,
+        cartItems.value,
+        totalAmount,
+        selectedCoupon.value?.id || null,
+        convertRestToCredit.value
+      )
 
       console.log('✅ Pagamento completato:', result)
 
       // Svuota carrello locale (già svuotato nel backend)
       cartItems.value = []
+
+      // Reset coupon selezionato
+      selectedCoupon.value = null
+
+      // Ricarica coupon (quello usato non sarà più available)
+      await loadCoupons()
 
       // Aggiorna crediti usando useUser (sincronizza con tutti i componenti)
       const { updateCredits } = useUser()
@@ -220,7 +300,14 @@ export function useCart(options = {}) {
       showCartModal.value = false
 
       // Redirect alla pagina success con orderId
-      window.location.href = `/success?order_id=${result.orderId}&type=credits`
+      const params = new URLSearchParams({
+        order_id: result.orderId,
+        type: 'credits'
+      })
+      if (result.creditBonus > 0) {
+        params.append('credit_bonus', result.creditBonus)
+      }
+      window.location.href = `/success?${params.toString()}`
 
     } catch (error) {
       console.error('❌ Errore durante pagamento con crediti:', error)
@@ -245,16 +332,58 @@ export function useCart(options = {}) {
 
       console.log('🚀 Creazione Stripe Checkout Session...')
 
-      const { checkoutUrl, sessionId } = await createCheckout(catalystRowId.value, cartItems.value)
+      // Passa coupon selezionato e flag conversione resto
+      const result = await createCheckout(
+        catalystRowId.value,
+        cartItems.value,
+        selectedCoupon.value?.id || null,
+        convertRestToCredit.value
+      )
 
-      console.log('✅ Checkout Session creata:', sessionId)
-      console.log('Redirect a:', checkoutUrl)
+      // Se ordine è gratuito (coupon ≥ totale), non c'è checkout URL
+      if (result.free) {
+        console.log('✅ Ordine gratuito completato:', result.orderId)
+
+        // Svuota carrello locale
+        cartItems.value = []
+
+        // Reset coupon
+        selectedCoupon.value = null
+
+        // Ricarica coupon
+        await loadCoupons()
+
+        // Se c'è credito bonus, aggiorna
+        if (result.creditBonus > 0) {
+          const { updateCredits } = useUser()
+          const newCredits = credits.value + result.creditBonus
+          updateCredits(newCredits)
+        }
+
+        // Chiudi modal
+        showCartModal.value = false
+
+        // Redirect a success
+        const params = new URLSearchParams({
+          order_id: result.orderId,
+          type: 'free'
+        })
+        if (result.creditBonus > 0) {
+          params.append('credit_bonus', result.creditBonus)
+        }
+        window.location.href = `/success?${params.toString()}`
+        return
+      }
+
+      // Altrimenti redirect a Stripe
+      console.log('✅ Checkout Session creata:', result.sessionId)
+      console.log('Redirect a:', result.checkoutUrl)
 
       // Chiudi modal carrello
       showCartModal.value = false
 
       // Redirect a Stripe
-      window.location.href = checkoutUrl
+      window.location.href = result.checkoutUrl
     } catch (error) {
       console.error('❌ Errore durante checkout Stripe:', error)
       toastError('Errore creando la sessione di pagamento. Riprova.', 4000)
@@ -279,15 +408,24 @@ export function useCart(options = {}) {
     cartItems,
     showCartModal,
     userCredits: credits, // Alias per compatibilità con componenti esistenti
+    availableCoupons,
+    selectedCoupon,
+    convertRestToCredit,
 
     // Computed
     cartCount,
     cartTotal,
+    discountAmount,
+    couponExceedsTotal,
+    excessAmount,
+    creditBonus,
+    finalTotal,
 
     // Methods
     addToCart,
     removeFromCart,
     loadCart,
+    loadCoupons,
     clearCart,
     toggleCartModal,
     handlePayWithCredits,

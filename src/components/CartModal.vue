@@ -85,25 +85,99 @@
         </div>
       </div>
 
-      <!-- Footer -->
-      <div v-if="cartItems.length > 0" class="modal-footer">
-        <div class="total-section">
-          <span class="total-label">Totale:</span>
-          <span class="total-amount">${{ cartTotal }}</span>
+      <!-- Coupon Section -->
+      <div v-if="cartItems.length > 0 && availableCoupons.length > 0" class="coupon-section">
+        <h3 class="coupon-title">Coupon Disponibili</h3>
+
+        <div class="coupon-list">
+          <label class="coupon-option">
+            <input
+              type="radio"
+              name="coupon"
+              :value="null"
+              v-model="selectedCoupon"
+              class="coupon-radio"
+            />
+            <span class="coupon-label">Nessun coupon</span>
+          </label>
+
+          <label
+            v-for="coupon in availableCoupons"
+            :key="coupon.id"
+            class="coupon-option"
+          >
+            <input
+              type="radio"
+              name="coupon"
+              :value="coupon"
+              v-model="selectedCoupon"
+              class="coupon-radio"
+            />
+            <div class="coupon-info">
+              <span class="coupon-code">{{ coupon.couponCode }}</span>
+              <span class="coupon-amount">-{{ coupon.amount.toFixed(2) }} €</span>
+            </div>
+          </label>
         </div>
 
-        <div class="footer-actions">
+        <!-- Avviso coupon eccessivo -->
+        <div v-if="couponExceedsTotal" class="coupon-warning">
+          <p class="warning-text">
+            ⚠️ Questo coupon vale più del totale ordine
+          </p>
+          <label class="convert-checkbox">
+            <input
+              type="checkbox"
+              v-model="convertRestToCredit"
+            />
+            <span>Converti resto in credito (+{{ excessAmount.toFixed(2) }} €)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div v-if="cartItems.length > 0" class="modal-footer">
+        <!-- Riepilogo con sconto -->
+        <div class="summary-section">
+          <div class="summary-row">
+            <span class="summary-label">Subtotale:</span>
+            <span class="summary-value">{{ parseFloat(cartTotal).toFixed(2) }} €</span>
+          </div>
+          <div v-if="selectedCoupon" class="summary-row discount-row">
+            <span class="summary-label">Sconto coupon:</span>
+            <span class="summary-value">-{{ discountAmount.toFixed(2) }} €</span>
+          </div>
+          <div v-if="creditBonus > 0" class="summary-row bonus-row">
+            <span class="summary-label">Credito bonus:</span>
+            <span class="summary-value">+{{ creditBonus.toFixed(2) }} €</span>
+          </div>
+          <div class="summary-row total-row">
+            <span class="total-label">Totale:</span>
+            <span class="total-amount">{{ finalTotal.toFixed(2) }} €</span>
+          </div>
+        </div>
+
+        <!-- Pulsanti pagamento -->
+        <div v-if="finalTotal > 0" class="footer-actions">
           <button class="clear-button" @click="handleClearCart">Svuota carrello</button>
           <button
             class="checkout-button credit-button"
             @click="handlePayWithCredits"
-            :disabled="userCredits < parseFloat(cartTotal)"
-            :title="userCredits < parseFloat(cartTotal) ? 'Credito insufficiente' : 'Paga con il tuo credito'"
+            :disabled="userCredits < finalTotal"
+            :title="userCredits < finalTotal ? 'Credito insufficiente' : 'Paga con il tuo credito'"
           >
-            Paga con Credito ({{ userCredits.toFixed(2) }} €)
+            Paga {{ finalTotal.toFixed(2) }} € con Credito
           </button>
           <button class="checkout-button stripe-button" @click="handlePayWithStripe">
-            Paga con Carta
+            Paga {{ finalTotal.toFixed(2) }} € con Carta
+          </button>
+        </div>
+
+        <!-- Ordine gratuito -->
+        <div v-else class="footer-actions">
+          <button class="clear-button" @click="handleClearCart">Svuota carrello</button>
+          <button class="checkout-button free-button" @click="handlePayWithStripe">
+            ✓ Completa Ordine Gratuito
           </button>
         </div>
       </div>
@@ -131,7 +205,16 @@ const {
   loadCart,
   userCredits,
   handlePayWithCredits,
-  handlePayWithStripe
+  handlePayWithStripe,
+  // Coupon
+  availableCoupons,
+  selectedCoupon,
+  convertRestToCredit,
+  discountAmount,
+  couponExceedsTotal,
+  excessAmount,
+  creditBonus,
+  finalTotal
 } = useCart({
   isAuthenticated,
   login: loginWithRedirect,
@@ -386,6 +469,176 @@ async function handleClearCart() {
 
 .stripe-button:hover {
   background-color: #16a34a;
+}
+
+.free-button {
+  background-color: #10b981;
+}
+
+.free-button:hover {
+  background-color: #059669;
+}
+
+/* Coupon Section */
+.coupon-section {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  background-color: #f9fafb;
+}
+
+.coupon-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.coupon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.coupon-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.coupon-option:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.coupon-radio {
+  appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.coupon-radio:checked {
+  border-color: #10b981;
+  background: #10b981;
+}
+
+.coupon-radio:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.375rem;
+  height: 0.375rem;
+  background: white;
+  border-radius: 50%;
+}
+
+.coupon-label {
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.coupon-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+}
+
+.coupon-code {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-heading);
+}
+
+.coupon-amount {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.coupon-warning {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+}
+
+.warning-text {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8125rem;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.convert-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: #78350f;
+}
+
+.convert-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* Summary Section */
+.summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.summary-label {
+  color: var(--color-text);
+}
+
+.summary-value {
+  font-weight: 500;
+  color: var(--color-heading);
+}
+
+.discount-row .summary-value {
+  color: #10b981;
+}
+
+.bonus-row .summary-value {
+  color: #f59e0b;
+}
+
+.total-row {
+  font-size: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
 }
 
 /* Transitions */

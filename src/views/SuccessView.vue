@@ -34,15 +34,24 @@
           </svg>
         </div>
 
-        <h1 class="success-title">Pagamento completato!</h1>
-        <p class="success-subtitle">{{ isRecharge ? 'La tua ricarica è stata completata con successo' : 'Grazie per il tuo acquisto' }}</p>
+        <h1 class="success-title">{{ isFreeOrder ? 'Ordine completato!' : 'Pagamento completato!' }}</h1>
+        <p class="success-subtitle">
+          {{ isFreeOrder ? 'Il tuo ordine è stato completato gratuitamente con il coupon' :
+             isRecharge ? 'La tua ricarica è stata completata con successo' :
+             'Grazie per il tuo acquisto' }}
+        </p>
+
+        <div v-if="creditBonus > 0" class="bonus-info">
+          <p class="bonus-icon">🎁</p>
+          <p class="bonus-text">Hai ricevuto <strong>{{ creditBonus.toFixed(2) }} €</strong> di credito bonus dal resto del coupon!</p>
+        </div>
 
         <div v-if="sessionId" class="order-info">
           <p class="info-label">ID Sessione:</p>
           <p class="info-value">{{ sessionId }}</p>
         </div>
 
-        <div v-if="!isCreditsPayment" class="test-notice">
+        <div v-if="!isCreditsPayment && !isFreeOrder" class="test-notice">
           <p>⚠️ <strong>TEST MODE</strong></p>
           <p>Nessun addebito reale è stato effettuato. Questo è un pagamento di test su Stripe.</p>
         </div>
@@ -74,6 +83,8 @@ const processing = ref(true)
 const error = ref(null)
 const isRecharge = ref(false)
 const isCreditsPayment = ref(false)
+const isFreeOrder = ref(false)
+const creditBonus = ref(0)
 
 async function getCatalystRowId() {
   try {
@@ -108,10 +119,41 @@ async function getCatalystRowId() {
 onMounted(async () => {
   sessionId.value = route.query.session_id || null
   const orderId = route.query.order_id || null
-  const paymentType = route.query.type || 'order' // 'order', 'recharge', or 'credits'
+  const paymentType = route.query.type || 'order' // 'order', 'recharge', 'credits', or 'free'
 
   // Set isRecharge based on payment type BEFORE processing
   isRecharge.value = paymentType === 'recharge'
+
+  // For free order (100% coupon), we have order_id and bonus info
+  if (paymentType === 'free') {
+    if (!orderId) {
+      error.value = 'Order ID mancante'
+      processing.value = false
+      return
+    }
+    console.log('Processing free order (100% coupon):', orderId)
+    isFreeOrder.value = true
+    creditBonus.value = parseFloat(route.query.credit_bonus || 0)
+
+    // Load cart to clear state
+    try {
+      const catalystRowId = await getCatalystRowId()
+      if (catalystRowId) {
+        await loadCart()
+        // Update credits if bonus was added
+        if (creditBonus.value > 0) {
+          const { getUserData } = await import('@/services/catalyst')
+          const userData = await getUserData(catalystRowId)
+          updateCredits(userData.credits)
+        }
+      }
+    } catch (err) {
+      console.error('Error loading cart after free order:', err)
+    }
+
+    processing.value = false
+    return
+  }
 
   // For credits payment, we have order_id instead of session_id
   if (paymentType === 'credits') {
@@ -121,6 +163,22 @@ onMounted(async () => {
       return
     }
     console.log('Processing credits payment for order:', orderId)
+    creditBonus.value = parseFloat(route.query.credit_bonus || 0)
+
+    // Update credits if bonus was added
+    if (creditBonus.value > 0) {
+      try {
+        const catalystRowId = await getCatalystRowId()
+        if (catalystRowId) {
+          const { getUserData } = await import('@/services/catalyst')
+          const userData = await getUserData(catalystRowId)
+          updateCredits(userData.credits)
+        }
+      } catch (err) {
+        console.error('Error updating credits:', err)
+      }
+    }
+
     // Credits payment is already complete, just show success
     isCreditsPayment.value = true
     processing.value = false
@@ -314,6 +372,30 @@ onMounted(async () => {
   font-size: 1.125rem;
   color: var(--color-text);
   margin: 0;
+}
+
+.bonus-info {
+  padding: 1.5rem;
+  background-color: #d1fae5;
+  border: 1px solid #22c55e;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+}
+
+.bonus-icon {
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.bonus-text {
+  font-size: 1rem;
+  color: #065f46;
+  margin: 0;
+}
+
+.bonus-text strong {
+  color: #047857;
 }
 
 .order-info {

@@ -282,9 +282,11 @@ export async function deleteFromCart(userId, domainNames) {
  * Create Stripe Checkout Session
  * @param {string} userId - User's ROWID
  * @param {Array} cartItems - Array of cart items with { domain_name, price, category }
- * @returns {Promise<Object>} Result with checkoutUrl and sessionId
+ * @param {string|null} selectedCouponId - ID del coupon selezionato (opzionale)
+ * @param {boolean} convertRestToCredit - Convertire resto coupon in credito (default: true)
+ * @returns {Promise<Object>} Result with checkoutUrl and sessionId, or { free: true, orderId, creditBonus }
  */
-export async function createCheckout(userId, cartItems) {
+export async function createCheckout(userId, cartItems, selectedCouponId = null, convertRestToCredit = true) {
   try {
     const response = await fetch(`${CATALYST_BASE_URL}/create-checkout`, {
       method: 'POST',
@@ -293,7 +295,9 @@ export async function createCheckout(userId, cartItems) {
       },
       body: JSON.stringify({
         userId,
-        cartItems
+        cartItems,
+        selectedCouponId,
+        convertRestToCredit
       })
     })
 
@@ -308,6 +312,16 @@ export async function createCheckout(userId, cartItems) {
       throw new Error(parsedOutput.error || 'Failed to create checkout session')
     }
 
+    // Ordine gratuito (coupon ≥ totale)
+    if (parsedOutput.free) {
+      return {
+        free: true,
+        orderId: parsedOutput.orderId,
+        creditBonus: parsedOutput.creditBonus || 0
+      }
+    }
+
+    // Ordine normale con Stripe
     return {
       checkoutUrl: parsedOutput.checkoutUrl,
       sessionId: parsedOutput.sessionId
@@ -523,9 +537,11 @@ export async function processRecharge(userId, stripeSessionId) {
  * @param {string} userId - User's ROWID
  * @param {Array} cartItems - Array of cart items
  * @param {number} totalAmount - Total amount in euros
- * @returns {Promise<Object>} Result with orderId, newCreditBalance
+ * @param {string|null} selectedCouponId - ID del coupon selezionato (opzionale)
+ * @param {boolean} convertRestToCredit - Convertire resto coupon in credito (default: true)
+ * @returns {Promise<Object>} Result with orderId, newCreditBalance, creditBonus
  */
-export async function payWithCredits(userId, cartItems, totalAmount) {
+export async function payWithCredits(userId, cartItems, totalAmount, selectedCouponId = null, convertRestToCredit = true) {
   try {
     const response = await fetch(`${CATALYST_BASE_URL}/pay-with-credits`, {
       method: 'POST',
@@ -535,7 +551,9 @@ export async function payWithCredits(userId, cartItems, totalAmount) {
       body: JSON.stringify({
         userId,
         cartItems,
-        totalAmount
+        totalAmount,
+        selectedCouponId,
+        convertRestToCredit
       })
     })
 
@@ -555,7 +573,8 @@ export async function payWithCredits(userId, cartItems, totalAmount) {
       previousBalance: parsedOutput.previousBalance,
       amountCharged: parsedOutput.amountCharged,
       newCreditBalance: parsedOutput.newCreditBalance,
-      domainsCount: parsedOutput.domainsCount
+      domainsCount: parsedOutput.domainsCount,
+      creditBonus: parsedOutput.creditBonus || 0
     }
   } catch (error) {
     console.error('Error paying with credits:', error)
