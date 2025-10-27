@@ -26,12 +26,17 @@
             type="text"
             placeholder="Scrivi il nickname..."
             class="search-input"
-            @input="onSearchInput"
+            :disabled="loadingUsers"
           />
         </div>
 
+        <!-- Loading users -->
+        <div v-if="loadingUsers" class="loading-state">
+          Caricamento utenti...
+        </div>
+
         <!-- Search Results -->
-        <div v-if="searchResults.length > 0" class="results-section">
+        <div v-else-if="searchResults.length > 0" class="results-section">
           <div
             v-for="user in searchResults"
             :key="user.rowId"
@@ -50,7 +55,7 @@
         </div>
 
         <!-- No results -->
-        <div v-else-if="searchQuery && !searching" class="no-results">
+        <div v-else-if="searchQuery && searchQuery.trim().length >= 2" class="no-results">
           Nessun utente trovato
         </div>
 
@@ -93,7 +98,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { searchUsersByNickname, getCouponTransferHistory, transferCoupon } from '@/services/catalyst'
+import { getAllUsers, getCouponTransferHistory, transferCoupon } from '@/services/catalyst'
 import { useUser } from '@/composables/useUser'
 
 const props = defineProps({
@@ -113,19 +118,49 @@ const { catalystRowId } = useUser()
 
 // State
 const searchQuery = ref('')
-const searchResults = ref([])
+const allUsers = ref([])
 const selectedUser = ref(null)
 const loading = ref(false)
-const searching = ref(false)
+const loadingUsers = ref(true)
 const error = ref(null)
 const success = ref(false)
 const couponOrigin = ref('Caricamento...')
 
-let searchTimeout = null
+// Computed: filtered users based on search query
+const searchResults = computed(() => {
+  if (!searchQuery.value || searchQuery.value.trim().length < 2) {
+    return []
+  }
 
-// Load coupon origin on mount
+  const query = searchQuery.value.trim().toLowerCase()
+
+  return allUsers.value
+    .filter(u => {
+      // Escludi l'utente corrente
+      if (u.rowId === catalystRowId.value) return false
+
+      // Cerca nel nickname
+      return u.nickname.toLowerCase().includes(query)
+    })
+    .slice(0, 10) // Limita a 10 risultati
+})
+
+// Load all users and coupon origin on mount
 onMounted(async () => {
   try {
+    // Carica tutti gli utenti
+    const users = await getAllUsers()
+    allUsers.value = users
+    loadingUsers.value = false
+    console.log('✅ Caricati', users.length, 'utenti')
+  } catch (err) {
+    console.error('Error loading users:', err)
+    loadingUsers.value = false
+    error.value = 'Impossibile caricare gli utenti'
+  }
+
+  try {
+    // Carica storia del coupon
     const history = await getCouponTransferHistory(props.coupon.id)
     if (history) {
       couponOrigin.value = `Ricevuto da @${history.fromNickname}`
@@ -137,31 +172,6 @@ onMounted(async () => {
     couponOrigin.value = 'Origine sconosciuta'
   }
 })
-
-// Search users with debounce
-const onSearchInput = () => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-
-  if (!searchQuery.value || searchQuery.value.trim().length < 2) {
-    searchResults.value = []
-    return
-  }
-
-  searching.value = true
-
-  searchTimeout = setTimeout(async () => {
-    try {
-      const results = await searchUsersByNickname(searchQuery.value.trim())
-      // Filter out current user
-      searchResults.value = results.filter(u => u.rowId !== catalystRowId.value)
-      searching.value = false
-    } catch (err) {
-      console.error('Error searching users:', err)
-      searchResults.value = []
-      searching.value = false
-    }
-  }, 300)
-}
 
 // Select user
 const selectUser = (user) => {
@@ -219,25 +229,27 @@ const close = () => {
 
 .modal-content {
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 2rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
+  color: #1a1a1a;
 }
 
 .btn-close {
@@ -255,57 +267,62 @@ const close = () => {
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 2rem;
 }
 
 .coupon-info {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #f9fafb 0%, #ecfdf5 100%);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
 }
 
 .coupon-code {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
 }
 
 .coupon-amount {
-  font-size: 1.25rem;
+  font-size: 1.75rem;
   color: #10b981;
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .coupon-origin {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: #6b7280;
+  font-style: italic;
 }
 
 .search-section {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-section label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #1a1a1a;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
+  padding: 1rem;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .results-section {
@@ -353,6 +370,13 @@ const close = () => {
   color: #10b981;
 }
 
+.loading-state {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
 .no-results {
   padding: 2rem;
   text-align: center;
@@ -361,28 +385,29 @@ const close = () => {
 }
 
 .selected-section {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .selected-section label {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #1a1a1a;
 }
 
 .selected-user {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem;
+  padding: 1rem 1.25rem;
   background: #ecfdf5;
-  border: 1px solid #10b981;
-  border-radius: 6px;
+  border: 2px solid #10b981;
+  border-radius: 8px;
 }
 
 .selected-user span {
+  font-size: 1.05rem;
   font-weight: 600;
   color: #10b981;
 }
@@ -422,18 +447,18 @@ const close = () => {
 
 .modal-footer {
   display: flex;
-  gap: 0.75rem;
-  padding: 1.5rem;
+  gap: 1rem;
+  padding: 2rem;
   border-top: 1px solid #e5e7eb;
 }
 
 .btn-secondary,
 .btn-primary {
   flex: 1;
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   border: none;
   transition: all 0.2s;

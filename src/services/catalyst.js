@@ -610,28 +610,26 @@ export async function getUserCoupons(userId) {
 }
 
 /**
- * Search users by nickname for coupon transfer
- * @param {string} searchQuery - Nickname search query
- * @returns {Promise<Array>} Array of users [{rowId, nickname, email}]
+ * Get all users for client-side filtering
+ * @returns {Promise<Array>} Array of all users [{rowId, nickname, email}]
  */
-export async function searchUsersByNickname(searchQuery) {
+export async function getAllUsers() {
   try {
-    const response = await fetch(`${CATALYST_BASE_URL}/search-user-by-nickname`, {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-all-users`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ searchQuery })
+      headers: { 'Content-Type': 'application/json' }
     })
 
     const data = await response.json()
     const parsedOutput = JSON.parse(data.output)
 
     if (!parsedOutput.success) {
-      throw new Error(parsedOutput.error || 'Failed to search users')
+      throw new Error(parsedOutput.error || 'Failed to get users')
     }
 
     return parsedOutput.users
   } catch (error) {
-    console.error('Error searching users:', error)
+    console.error('Error getting all users:', error)
     throw error
   }
 }
