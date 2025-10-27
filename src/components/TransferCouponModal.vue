@@ -98,6 +98,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getAllUsers, getCouponTransferHistory, transferCoupon } from '@/services/catalyst'
 import { useUser } from '@/composables/useUser'
 
@@ -114,6 +115,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'transferred'])
 
+const router = useRouter()
 const { catalystRowId } = useUser()
 
 // State
@@ -195,10 +197,14 @@ const handleTransfer = async () => {
 
     success.value = true
 
-    // Close modal after 1.5s
+    // Close modal and redirect to dashboard after 1.5s
     setTimeout(() => {
       emit('transferred')
       close()
+      // Navigate to dashboard with force reload
+      router.push('/dashboard').then(() => {
+        window.location.reload()
+      })
     }, 1500)
   } catch (err) {
     error.value = err.message || 'Errore durante il trasferimento'
