@@ -608,3 +608,86 @@ export async function getUserCoupons(userId) {
     throw error
   }
 }
+
+/**
+ * Search users by nickname for coupon transfer
+ * @param {string} searchQuery - Nickname search query
+ * @returns {Promise<Array>} Array of users [{rowId, nickname, email}]
+ */
+export async function searchUsersByNickname(searchQuery) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/search-user-by-nickname`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ searchQuery })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to search users')
+    }
+
+    return parsedOutput.users
+  } catch (error) {
+    console.error('Error searching users:', error)
+    throw error
+  }
+}
+
+/**
+ * Get transfer history for a coupon (last transfer only)
+ * @param {number} couponId - ROWID of the coupon
+ * @returns {Promise<Object|null>} Last transfer object or null
+ */
+export async function getCouponTransferHistory(couponId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-coupon-transfer-history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ couponId })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get transfer history')
+    }
+
+    return parsedOutput.lastTransfer
+  } catch (error) {
+    console.error('Error getting transfer history:', error)
+    throw error
+  }
+}
+
+/**
+ * Transfer a coupon to another user
+ * @param {number} couponId - ROWID of the coupon
+ * @param {number} fromUserId - ROWID of current owner
+ * @param {number} toUserId - ROWID of recipient
+ * @returns {Promise<Object>} Transfer result
+ */
+export async function transferCoupon(couponId, fromUserId, toUserId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/transfer-coupon`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ couponId, fromUserId, toUserId })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Trasferimento fallito')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error transferring coupon:', error)
+    throw error
+  }
+}

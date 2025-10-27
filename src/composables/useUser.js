@@ -223,6 +223,26 @@ export function useUser() {
     await initialize(auth0User, getAccessTokenSilently)
   }
 
+  /**
+   * Refresh coupons list (after transfer or use)
+   */
+  const refreshCoupons = async () => {
+    if (!catalystRowId.value) {
+      console.warn('⚠️ Cannot refresh coupons: user not initialized')
+      return
+    }
+
+    try {
+      console.log('🔄 Ricaricamento coupon...')
+      const coupons = await getUserCoupons(catalystRowId.value)
+      availableCoupons.value = coupons
+      console.log('✅ Coupon ricaricati:', coupons.length)
+    } catch (error) {
+      console.error('❌ Errore ricaricamento coupon:', error)
+      throw error
+    }
+  }
+
   return {
     // State IMMUTABILE (readonly per sicurezza)
     catalystRowId: readonly(catalystRowId),
@@ -250,6 +270,7 @@ export function useUser() {
     updateAvatar,
     updateNickname,
     addCoupon,
+    refreshCoupons,
     clearAll,
     forceReload
   }

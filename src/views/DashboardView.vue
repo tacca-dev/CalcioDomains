@@ -141,10 +141,22 @@
         </div>
 
         <!-- Coupons list -->
-        <div v-else class="domains-simple">
-          <div v-for="coupon in userCoupons" :key="coupon.id" class="domain-row-simple">
-            <span class="domain-name-text">{{ coupon.couponCode }}</span>
-            <span class="domain-price-text">{{ coupon.amount.toFixed(2) }} €</span>
+        <div v-else class="coupons-list">
+          <div v-for="coupon in userCoupons" :key="coupon.id" class="coupon-row">
+            <div class="coupon-info">
+              <span class="coupon-code">{{ coupon.couponCode }}</span>
+              <span class="coupon-amount">{{ coupon.amount.toFixed(2) }} €</span>
+              <span class="coupon-status" :class="coupon.status">
+                {{ coupon.status === 'available' ? 'Disponibile' : 'Usato' }}
+              </span>
+            </div>
+            <button
+              v-if="coupon.status === 'available'"
+              @click="openTransferModal(coupon)"
+              class="btn-transfer"
+            >
+              ↗ Trasferisci
+            </button>
           </div>
         </div>
       </div>
@@ -206,6 +218,14 @@
       @close="showRechargeModal = false"
       @recharge="handleRecharge"
     />
+
+    <!-- Transfer Coupon Modal -->
+    <TransferCouponModal
+      v-if="showTransferModal"
+      v-model="showTransferModal"
+      :coupon="selectedCoupon"
+      @transferred="onCouponTransferred"
+    />
   </div>
 </template>
 
@@ -215,6 +235,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
 import { getUserData, getAvatarUrl, getUserOrders, createRechargeCheckout, getUserCoupons } from '@/services/catalyst'
 import RechargeModal from '@/components/RechargeModal.vue'
+import TransferCouponModal from '@/components/TransferCouponModal.vue'
 import { useToast } from '@/composables/useToast'
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
@@ -240,6 +261,22 @@ const availableCouponsCount = computed(() => userCoupons.value.filter(c => c.sta
 
 // Recharge modal
 const showRechargeModal = ref(false)
+
+// Transfer modal
+const showTransferModal = ref(false)
+const selectedCoupon = ref(null)
+
+// Open transfer modal
+const openTransferModal = (coupon) => {
+  selectedCoupon.value = coupon
+  showTransferModal.value = true
+}
+
+// Handle coupon transferred
+const onCouponTransferred = async () => {
+  console.log('✅ Coupon trasferito, ricarico lista...')
+  await loadUserCoupons()
+}
 
 // Load user data from Catalyst
 const loadUserData = async () => {
@@ -1029,6 +1066,100 @@ onMounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+}
+
+/* Coupon Transfer Styling */
+.coupons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coupon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.coupon-row:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.coupon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.coupon-code {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.coupon-amount {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.coupon-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.coupon-status.available {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.coupon-status.used {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.btn-transfer {
+  padding: 0.5rem 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-transfer:hover {
+  background: #059669;
+}
+
+.btn-transfer:active {
+  background: #047857;
+}
+
+@media (max-width: 768px) {
+  .coupon-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .btn-transfer {
+    width: 100%;
   }
 }
 </style>
