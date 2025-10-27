@@ -14,6 +14,7 @@
         <p class="modal-description">
           Seleziona il taglio di ricarica
           <span v-if="firstRechargeBonusAvailable" class="bonus-note">• Prima ricarica: +50% bonus</span>
+          <span v-else class="bonus-note">• Bonus progressivi: 5%-20% in base all'importo</span>
         </p>
 
         <!-- Packages list -->
@@ -35,8 +36,8 @@
               <div class="package-amount">{{ pkg.amount.toLocaleString('it-IT') }} €</div>
               <div class="package-info">
                 {{ pkg.amount.toLocaleString('it-IT') }} € crediti
-                <span v-if="getBonusAmount(pkg.amount) > 0">
-                  + {{ getBonusAmount(pkg.amount).toLocaleString('it-IT') }} € coupon
+                <span v-if="getBonusAmount(pkg.amount) > 0" class="bonus-badge">
+                  + {{ getBonusAmount(pkg.amount).toLocaleString('it-IT') }} € coupon (+{{ getBonusPercentage(pkg.amount) }}%)
                 </span>
               </div>
             </div>
@@ -85,15 +86,12 @@ const packages = [
   { amount: 10000 }
 ]
 
-// Calculate bonus amount based on recharge amount and user status
-const getBonusAmount = (amount) => {
-  // First recharge: 50% bonus for all amounts
+// Get bonus percentage for display
+const getBonusPercentage = (amount) => {
   if (firstRechargeBonusAvailable.value) {
-    return amount * 0.5
+    return 50
   }
 
-  // Subsequent recharges: progressive bonus
-  // 500€=0%, 1000€=5%, 2500€=10%, 5000€=15%, 10000€=20%
   const bonusPercentages = {
     500: 0,
     1000: 5,
@@ -102,7 +100,12 @@ const getBonusAmount = (amount) => {
     10000: 20
   }
 
-  const percentage = bonusPercentages[amount] || 0
+  return bonusPercentages[amount] || 0
+}
+
+// Calculate bonus amount based on recharge amount and user status
+const getBonusAmount = (amount) => {
+  const percentage = getBonusPercentage(amount)
   return amount * (percentage / 100)
 }
 
@@ -272,6 +275,13 @@ const handleProceed = () => {
 .package-info {
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+.bonus-badge {
+  display: inline-block;
+  color: #10b981;
+  font-weight: 600;
+  margin-left: 0.25rem;
 }
 
 /* Footer */
