@@ -48,9 +48,8 @@
           </button>
 
           <!-- Admin Panel button (only for admins) -->
-          <!-- Temporaneamente mostriamo sempre per testing -->
           <button
-            v-if="isAdmin || true"
+            v-if="isAdmin"
             @click="$router.push('/admin')"
             class="admin-button"
           >

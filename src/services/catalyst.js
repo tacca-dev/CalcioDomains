@@ -718,3 +718,28 @@ export async function getAllUsersAdmin() {
     throw error
   }
 }
+
+/**
+ * Get all sold domains (Admin only)
+ * @returns {Promise<Array>} Array of all sold domains with buyer info
+ */
+export async function getAllDomainsAdmin() {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-all-domains-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get domains data')
+    }
+
+    return parsedOutput.domains
+  } catch (error) {
+    console.error('Error getting all domains (admin):', error)
+    throw error
+  }
+}

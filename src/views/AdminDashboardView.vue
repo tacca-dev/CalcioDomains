@@ -128,7 +128,54 @@
       <!-- Domini -->
       <div v-if="activeTab === 'domains'" class="content-section">
         <h2>Gestione Domini</h2>
-        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+        <div class="search-box">
+          <input
+            v-model="domainsSearchQuery"
+            type="text"
+            placeholder="Cerca per dominio o acquirente..."
+            class="search-input"
+          />
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="domainsLoading" class="state-message">
+          Caricamento domini...
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="domainsError" class="state-message error">
+          Errore: {{ domainsError }}
+        </div>
+
+        <!-- Domains table -->
+        <div v-else-if="filteredDomains.length > 0" class="table-container">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Dominio</th>
+                <th>Acquirente</th>
+                <th>Prezzo</th>
+                <th>Categoria</th>
+                <th>Data Acquisto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(domain, index) in filteredDomains" :key="index">
+                <td class="nickname-cell">{{ domain.domainName }}</td>
+                <td class="email-cell">{{ domain.buyerNickname }}</td>
+                <td class="credits-cell">{{ formatCurrency(domain.price) }}</td>
+                <td>{{ domain.category }}</td>
+                <td class="date-cell">{{ formatDate(domain.purchaseDate) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="state-message">
+          <span v-if="domainsSearchQuery">Nessun dominio trovato per "{{ domainsSearchQuery }}"</span>
+          <span v-else>Nessun dominio venduto</span>
+        </div>
       </div>
 
       <!-- Coupon -->
@@ -157,7 +204,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
 import { useToast } from '@/composables/useToast'
-import { getAllUsersAdmin } from '@/services/catalyst'
+import { getAllUsersAdmin, getAllDomainsAdmin } from '@/services/catalyst'
 
 const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
@@ -170,6 +217,12 @@ const usersData = ref([])
 const usersLoading = ref(false)
 const usersError = ref(null)
 const searchQuery = ref('')
+
+// Domains management state
+const domainsData = ref([])
+const domainsLoading = ref(false)
+const domainsError = ref(null)
+const domainsSearchQuery = ref('')
 
 // Load users data
 const loadUsers = async () => {
@@ -201,6 +254,40 @@ const filteredUsers = computed(() => {
     const nickname = (user.nickname || '').toLowerCase()
     const email = (user.email || '').toLowerCase()
     return nickname.includes(query) || email.includes(query)
+  })
+})
+
+// Load domains data
+const loadDomains = async () => {
+  domainsLoading.value = true
+  domainsError.value = null
+
+  try {
+    const domains = await getAllDomainsAdmin()
+    domainsData.value = domains
+    console.log('Loaded', domains.length, 'domains')
+  } catch (error) {
+    console.error('Error loading domains:', error)
+    domainsError.value = error.message || 'Errore nel caricamento dei domini'
+    showToast('Errore nel caricamento dei domini', 'error')
+  } finally {
+    domainsLoading.value = false
+  }
+}
+
+// Filtered domains based on search query
+const filteredDomains = computed(() => {
+  if (!domainsSearchQuery.value.trim()) {
+    return domainsData.value
+  }
+
+  const query = domainsSearchQuery.value.toLowerCase().trim()
+
+  return domainsData.value.filter(domain => {
+    const domainName = (domain.domainName || '').toLowerCase()
+    const buyerNickname = (domain.buyerNickname || '').toLowerCase()
+    const buyerEmail = (domain.buyerEmail || '').toLowerCase()
+    return domainName.includes(query) || buyerNickname.includes(query) || buyerEmail.includes(query)
   })
 })
 
@@ -238,8 +325,8 @@ onMounted(async () => {
     return
   }
 
-  // Temporaneamente disabilitiamo il controllo admin per testing
-  if (!isAdmin.value && false) { // && false = disabilita temporaneamente
+  // Verifica che l'utente sia admin
+  if (!isAdmin.value) {
     console.warn('User is not admin, access denied')
     showToast('Accesso negato: solo gli amministratori possono accedere a questa pagina', 'error')
     router.push('/dashboard')
@@ -250,8 +337,8 @@ onMounted(async () => {
   enableAdminMode()
   console.log('Admin dashboard accessed successfully')
 
-  // Load users data
-  await loadUsers()
+  // Load users and domains data
+  await Promise.all([loadUsers(), loadDomains()])
 })
 
 // Quando l'utente lascia la admin dashboard, disabilita admin mode
