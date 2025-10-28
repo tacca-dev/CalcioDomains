@@ -48,8 +48,9 @@
           </button>
 
           <!-- Admin Panel button (only for admins) -->
+          <!-- Temporaneamente mostriamo sempre per testing -->
           <button
-            v-if="isAdmin"
+            v-if="isAdmin || true"
             @click="$router.push('/admin')"
             class="admin-button"
           >
@@ -79,7 +80,12 @@ const {
 } = useAuth0()
 
 // Get user state
-const { isAdmin, adminMode } = useUser()
+const { isAdmin, adminMode, isInitialized } = useUser()
+
+// Debug log per capire lo stato
+console.log('NavBar - isInitialized:', isInitialized.value)
+console.log('NavBar - isAdmin:', isAdmin.value)
+console.log('NavBar - adminMode:', adminMode.value)
 
 // Login function
 const login = () => {
