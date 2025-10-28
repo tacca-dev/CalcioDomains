@@ -69,16 +69,14 @@
 
       <!-- Utenti -->
       <div v-if="activeTab === 'users'" class="content-section">
-        <div class="section-header">
-          <h2>Gestione Utenti</h2>
-          <div class="search-box">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cerca per nickname o email..."
-              class="search-input"
-            />
-          </div>
+        <h2>Gestione Utenti</h2>
+        <div class="search-box">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Cerca per nickname o email..."
+            class="search-input"
+          />
         </div>
 
         <!-- Loading state -->
@@ -99,8 +97,8 @@
                 <th>Nickname</th>
                 <th>Email</th>
                 <th>Credito</th>
-                <th>Domini</th>
-                <th>Admin</th>
+                <th>N. Domini</th>
+                <th>Ruolo</th>
                 <th>Registrazione</th>
               </tr>
             </thead>
@@ -110,9 +108,9 @@
                 <td class="email-cell">{{ user.email }}</td>
                 <td class="credits-cell">{{ formatCurrency(user.credits) }}</td>
                 <td class="orders-cell">{{ user.totalOrders }}</td>
-                <td class="admin-cell">
-                  <span v-if="user.isAdmin" class="admin-badge-table">ADMIN</span>
-                  <span v-else class="user-badge">USER</span>
+                <td class="role-cell">
+                  <span v-if="user.isAdmin">ADMIN</span>
+                  <span v-else>USER</span>
                 </td>
                 <td class="date-cell">{{ formatDate(user.createdAt) }}</td>
               </tr>
@@ -374,22 +372,10 @@ const goToUserDashboard = () => {
   margin: 0;
 }
 
-/* Section header with search */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-}
-
-.section-header h2 {
-  margin: 0;
-}
-
+/* Search box */
 .search-box {
-  flex: 0 0 auto;
-  min-width: 300px;
+  margin-bottom: 1.5rem;
+  max-width: 400px;
 }
 
 .search-input {
@@ -476,31 +462,10 @@ const goToUserDashboard = () => {
   font-weight: 500;
 }
 
-.admin-cell {
+.role-cell {
   text-align: center;
-}
-
-.admin-badge-table {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  background: #ecfdf5;
-  color: #10b981;
-  border: 1px solid #10b981;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.user-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  background: #f3f4f6;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  font-size: 0.75rem;
   font-weight: 500;
+  color: #374151;
 }
 
 .date-cell {
@@ -537,14 +502,8 @@ const goToUserDashboard = () => {
     padding: 1.5rem;
   }
 
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .search-box {
-    width: 100%;
-    min-width: auto;
+    max-width: 100%;
   }
 
   .users-table {
