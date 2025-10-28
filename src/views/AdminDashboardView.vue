@@ -103,14 +103,36 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const { disableAdminMode } = useUser()
+const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
+const { showToast } = useToast()
 
 const activeSection = ref(null)
+
+// Verifica permessi admin all'accesso
+onMounted(() => {
+  if (!isInitialized.value) {
+    console.warn('User not initialized, redirecting to dashboard')
+    router.push('/dashboard')
+    return
+  }
+
+  if (!isAdmin.value) {
+    console.warn('User is not admin, access denied')
+    showToast('Accesso negato: solo gli amministratori possono accedere a questa pagina', 'error')
+    router.push('/dashboard')
+    return
+  }
+
+  // Abilita admin mode
+  enableAdminMode()
+  console.log('Admin dashboard accessed successfully')
+})
 
 const openSection = (section) => {
   activeSection.value = section
