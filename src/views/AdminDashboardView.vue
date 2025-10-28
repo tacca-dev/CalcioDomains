@@ -8,96 +8,94 @@
       </div>
       <div class="header-actions">
         <button class="action-button" @click="goToUserDashboard">
-          <span class="icon">←</span>
           Dashboard Utente
         </button>
       </div>
     </div>
 
-    <!-- Admin Cards Grid -->
-    <div class="admin-grid">
-      <div
-        class="admin-card"
-        @click="openSection('stats')"
-        :class="{ active: activeSection === 'stats' }"
+    <!-- Tabs -->
+    <div class="action-tabs">
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'stats' }"
+        @click="activeTab = 'stats'"
       >
-        <div class="card-icon">STATS</div>
-        <h3 class="card-title">Statistiche Generali</h3>
-        <p class="card-description">
-          Panoramica utenti, domini, revenue e metriche chiave del sistema
-        </p>
-      </div>
-
-      <div
-        class="admin-card"
-        @click="openSection('users')"
-        :class="{ active: activeSection === 'users' }"
+        Statistiche
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'users' }"
+        @click="activeTab = 'users'"
       >
-        <div class="card-icon">USERS</div>
-        <h3 class="card-title">Gestione Utenti</h3>
-        <p class="card-description">
-          Visualizza e gestisci tutti gli utenti registrati
-        </p>
-      </div>
-
-      <div
-        class="admin-card"
-        @click="openSection('domains')"
-        :class="{ active: activeSection === 'domains' }"
+        Utenti
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'domains' }"
+        @click="activeTab = 'domains'"
       >
-        <div class="card-icon">DOM</div>
-        <h3 class="card-title">Gestione Domini</h3>
-        <p class="card-description">
-          Visualizza tutti i domini venduti e le transazioni
-        </p>
-      </div>
-
-      <div
-        class="admin-card"
-        @click="openSection('coupons')"
-        :class="{ active: activeSection === 'coupons' }"
+        Domini
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'coupons' }"
+        @click="activeTab = 'coupons'"
       >
-        <div class="card-icon">COUP</div>
-        <h3 class="card-title">Gestione Coupon</h3>
-        <p class="card-description">
-          Visualizza coupon attivi, usati e storico trasferimenti
-        </p>
-      </div>
-
-      <div
-        class="admin-card"
-        @click="openSection('pricing')"
-        :class="{ active: activeSection === 'pricing' }"
+        Coupon
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'pricing' }"
+        @click="activeTab = 'pricing'"
       >
-        <div class="card-icon">PRICE</div>
-        <h3 class="card-title">Gestione Prezzi</h3>
-        <p class="card-description">
-          Modifica coefficienti categorie domini e bonus ricariche
-        </p>
-      </div>
-
-      <div
-        class="admin-card"
-        @click="openSection('prompts')"
-        :class="{ active: activeSection === 'prompts' }"
+        Prezzi
+      </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'prompts' }"
+        @click="activeTab = 'prompts'"
       >
-        <div class="card-icon">PROMPT</div>
-        <h3 class="card-title">Modifica Prompt</h3>
-        <p class="card-description">
-          Gestisci i prompt AI del sistema
-        </p>
-      </div>
+        Prompt
+      </button>
     </div>
 
-    <!-- Section Content (Placeholder) -->
-    <div v-if="activeSection" class="section-content">
-      <h2>{{ getSectionTitle(activeSection) }}</h2>
-      <p class="placeholder-text">
-        Questa sezione sarà implementata nelle prossime fasi.
-      </p>
-      <button class="btn-close-section" @click="activeSection = null">
-        Torna alle Cards
-      </button>
+    <!-- Tab Content -->
+    <div class="tab-content">
+      <!-- Statistiche -->
+      <div v-if="activeTab === 'stats'" class="content-section">
+        <h2>Statistiche Generali</h2>
+        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+      </div>
+
+      <!-- Utenti -->
+      <div v-if="activeTab === 'users'" class="content-section">
+        <h2>Gestione Utenti</h2>
+        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+      </div>
+
+      <!-- Domini -->
+      <div v-if="activeTab === 'domains'" class="content-section">
+        <h2>Gestione Domini</h2>
+        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+      </div>
+
+      <!-- Coupon -->
+      <div v-if="activeTab === 'coupons'" class="content-section">
+        <h2>Gestione Coupon</h2>
+        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+      </div>
+
+      <!-- Prezzi -->
+      <div v-if="activeTab === 'pricing'" class="content-section">
+        <h2>Gestione Prezzi</h2>
+        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+      </div>
+
+      <!-- Prompt -->
+      <div v-if="activeTab === 'prompts'" class="content-section">
+        <h2>Modifica Prompt</h2>
+        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+      </div>
     </div>
   </div>
 </template>
@@ -112,7 +110,7 @@ const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
 const { showToast } = useToast()
 
-const activeSection = ref(null)
+const activeTab = ref('stats')
 
 // Verifica permessi admin all'accesso
 onMounted(() => {
@@ -137,22 +135,6 @@ onMounted(() => {
   console.log('Admin dashboard accessed successfully')
 })
 
-const openSection = (section) => {
-  activeSection.value = section
-}
-
-const getSectionTitle = (section) => {
-  const titles = {
-    stats: 'Statistiche Generali',
-    users: 'Gestione Utenti',
-    domains: 'Gestione Domini',
-    coupons: 'Gestione Coupon',
-    pricing: 'Gestione Prezzi',
-    prompts: 'Modifica Prompt'
-  }
-  return titles[section] || ''
-}
-
 // Quando l'utente lascia la admin dashboard, disabilita admin mode
 const goToUserDashboard = () => {
   disableAdminMode()
@@ -162,19 +144,20 @@ const goToUserDashboard = () => {
 
 <style scoped>
 .admin-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  min-height: 100vh;
+  min-height: calc(100vh - 80px);
 }
 
+/* Header */
 .admin-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .header-content {
@@ -182,156 +165,92 @@ const goToUserDashboard = () => {
 }
 
 .admin-title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #1a1a1a;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.5px;
+  margin: 0 0 0.25rem 0;
 }
 
 .admin-subtitle {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: #6b7280;
   margin: 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .action-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s;
 }
 
 .action-button:hover {
   background: #f9fafb;
-  border-color: #d1d5db;
 }
 
-.icon {
-  font-size: 1.25rem;
-}
-
-/* Admin Cards Grid */
-.admin-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 1.5rem;
+/* Tabs (stesso stile di DashboardView) */
+.action-tabs {
+  display: flex;
+  gap: 0.5rem;
   margin-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+  padding-bottom: 0;
 }
 
-.admin-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 2rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-
-.admin-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: #10b981;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.2s;
-}
-
-.admin-card:hover {
-  border-color: #10b981;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
-  transform: translateY(-2px);
-}
-
-.admin-card:hover::before {
-  transform: scaleX(1);
-}
-
-.admin-card.active {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
-
-.admin-card.active::before {
-  transform: scaleX(1);
-}
-
-.card-icon {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #10b981;
-  letter-spacing: 1px;
-  margin-bottom: 1rem;
-}
-
-.card-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 0.75rem 0;
-}
-
-.card-description {
-  font-size: 1rem;
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 500;
   color: #6b7280;
-  line-height: 1.5;
-  margin: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
 }
 
-/* Section Content (Placeholder) */
-.section-content {
+.tab-button:hover {
+  color: #1a1a1a;
+  background: #f9fafb;
+}
+
+.tab-button.active {
+  color: #1a1a1a;
+  border-bottom-color: #10b981;
+  background: transparent;
+}
+
+/* Tab Content */
+.tab-content {
   background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 3rem;
-  text-align: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 2rem;
+  min-height: 400px;
 }
 
-.section-content h2 {
-  font-size: 2rem;
+.content-section h2 {
+  font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 1rem 0;
 }
 
-.placeholder-text {
-  font-size: 1.125rem;
+.placeholder {
   color: #6b7280;
-  margin: 0 0 2rem 0;
-}
-
-.btn-close-section {
-  padding: 0.75rem 1.5rem;
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 8px;
   font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-close-section:hover {
-  background: #059669;
+  margin: 0;
 }
 
 /* Responsive */
@@ -347,15 +266,20 @@ const goToUserDashboard = () => {
   }
 
   .admin-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
-  .admin-grid {
-    grid-template-columns: 1fr;
+  .action-tabs {
+    gap: 0.25rem;
   }
 
-  .section-content {
-    padding: 2rem 1rem;
+  .tab-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .tab-content {
+    padding: 1.5rem;
   }
 }
 </style>
