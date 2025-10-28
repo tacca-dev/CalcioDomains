@@ -69,8 +69,62 @@
 
       <!-- Utenti -->
       <div v-if="activeTab === 'users'" class="content-section">
-        <h2>Gestione Utenti</h2>
-        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+        <div class="section-header">
+          <h2>Gestione Utenti</h2>
+          <div class="search-box">
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Cerca per nickname o email..."
+              class="search-input"
+            />
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="usersLoading" class="state-message">
+          Caricamento utenti...
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="usersError" class="state-message error">
+          Errore: {{ usersError }}
+        </div>
+
+        <!-- Users table -->
+        <div v-else-if="filteredUsers.length > 0" class="table-container">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Nickname</th>
+                <th>Email</th>
+                <th>Credito</th>
+                <th>Domini</th>
+                <th>Admin</th>
+                <th>Registrazione</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in filteredUsers" :key="user.rowId">
+                <td class="nickname-cell">{{ user.nickname }}</td>
+                <td class="email-cell">{{ user.email }}</td>
+                <td class="credits-cell">{{ formatCurrency(user.credits) }}</td>
+                <td class="orders-cell">{{ user.totalOrders }}</td>
+                <td class="admin-cell">
+                  <span v-if="user.isAdmin" class="admin-badge-table">ADMIN</span>
+                  <span v-else class="user-badge">USER</span>
+                </td>
+                <td class="date-cell">{{ formatDate(user.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="state-message">
+          <span v-if="searchQuery">Nessun utente trovato per "{{ searchQuery }}"</span>
+          <span v-else>Nessun utente registrato</span>
+        </div>
       </div>
 
       <!-- Domini -->
@@ -101,10 +155,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
 import { useToast } from '@/composables/useToast'
+import { getAllUsersAdmin } from '@/services/catalyst'
 
 const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
@@ -112,8 +167,71 @@ const { showToast } = useToast()
 
 const activeTab = ref('stats')
 
+// Users management state
+const usersData = ref([])
+const usersLoading = ref(false)
+const usersError = ref(null)
+const searchQuery = ref('')
+
+// Load users data
+const loadUsers = async () => {
+  usersLoading.value = true
+  usersError.value = null
+
+  try {
+    const users = await getAllUsersAdmin()
+    usersData.value = users
+    console.log('Loaded', users.length, 'users')
+  } catch (error) {
+    console.error('Error loading users:', error)
+    usersError.value = error.message || 'Errore nel caricamento degli utenti'
+    showToast('Errore nel caricamento degli utenti', 'error')
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+// Filtered users based on search query
+const filteredUsers = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return usersData.value
+  }
+
+  const query = searchQuery.value.toLowerCase().trim()
+
+  return usersData.value.filter(user => {
+    const nickname = (user.nickname || '').toLowerCase()
+    const email = (user.email || '').toLowerCase()
+    return nickname.includes(query) || email.includes(query)
+  })
+})
+
+// Format currency
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('it-IT', {
+    style: 'currency',
+    currency: 'EUR'
+  }).format(amount)
+}
+
+// Format date
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+
+  try {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('it-IT', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date)
+  } catch (error) {
+    return dateString
+  }
+}
+
 // Verifica permessi admin all'accesso
-onMounted(() => {
+onMounted(async () => {
   console.log('AdminDashboard onMounted - isInitialized:', isInitialized.value, 'isAdmin:', isAdmin.value)
 
   if (!isInitialized.value) {
@@ -133,6 +251,9 @@ onMounted(() => {
   // Abilita admin mode
   enableAdminMode()
   console.log('Admin dashboard accessed successfully')
+
+  // Load users data
+  await loadUsers()
 })
 
 // Quando l'utente lascia la admin dashboard, disabilita admin mode
@@ -253,6 +374,140 @@ const goToUserDashboard = () => {
   margin: 0;
 }
 
+/* Section header with search */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.search-box {
+  flex: 0 0 auto;
+  min-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+/* State messages */
+.state-message {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.state-message.error {
+  color: #dc2626;
+}
+
+/* Users table */
+.table-container {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.users-table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.users-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.users-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.1s;
+}
+
+.users-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.users-table td {
+  padding: 0.75rem 1rem;
+  color: #374151;
+}
+
+.nickname-cell {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.email-cell {
+  color: #6b7280;
+}
+
+.credits-cell {
+  font-weight: 500;
+  color: #10b981;
+}
+
+.orders-cell {
+  text-align: center;
+  font-weight: 500;
+}
+
+.admin-cell {
+  text-align: center;
+}
+
+.admin-badge-table {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #ecfdf5;
+  color: #10b981;
+  border: 1px solid #10b981;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.user-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.date-cell {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-container {
@@ -280,6 +535,25 @@ const goToUserDashboard = () => {
 
   .tab-content {
     padding: 1.5rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-box {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .users-table {
+    font-size: 0.875rem;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding: 0.5rem 0.75rem;
   }
 }
 </style>

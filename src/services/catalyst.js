@@ -689,3 +689,32 @@ export async function transferCoupon(couponId, fromUserId, toUserId) {
     throw error
   }
 }
+
+// ============================================================================
+// ADMIN FUNCTIONS
+// ============================================================================
+
+/**
+ * Get all users with order counts (Admin only)
+ * @returns {Promise<Array>} Array of all users with details
+ */
+export async function getAllUsersAdmin() {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-all-users-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get admin users data')
+    }
+
+    return parsedOutput.users
+  } catch (error) {
+    console.error('Error getting all users (admin):', error)
+    throw error
+  }
+}
