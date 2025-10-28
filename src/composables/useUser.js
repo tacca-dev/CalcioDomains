@@ -19,6 +19,10 @@ const stripeCustomerId = ref(null)
 // Coupon management
 const availableCoupons = ref([])
 const firstRechargeBonusAvailable = ref(false)
+const isAdmin = ref(false)
+
+// Admin mode state (persisted in localStorage)
+const adminMode = ref(localStorage.getItem('adminMode') === 'true')
 
 // Flags
 const isInitialized = ref(false)
@@ -129,10 +133,10 @@ export function useUser() {
       credits.value = parseFloat(userData.credits || 0)
       avatar.value = userData.avatar_file_id
       stripeCustomerId.value = userData.stripe_customer_id
-
       // Coupon data
       availableCoupons.value = coupons
       firstRechargeBonusAvailable.value = !userData.first_recharge_bonus_claimed
+      isAdmin.value = userData.is_admin
 
       isInitialized.value = true
 
@@ -141,7 +145,8 @@ export function useUser() {
         email: email.value,
         credits: credits.value,
         coupons: coupons.length,
-        firstRechargeBonusAvailable: firstRechargeBonusAvailable.value
+        firstRechargeBonusAvailable: firstRechargeBonusAvailable.value,
+        isAdmin: isAdmin.value
       })
     } catch (error) {
       console.error('❌ Errore durante inizializzazione:', error)
@@ -208,9 +213,12 @@ export function useUser() {
     stripeCustomerId.value = null
     availableCoupons.value = []
     firstRechargeBonusAvailable.value = false
+    isAdmin.value = false
+    adminMode.value = false
+    localStorage.removeItem('adminMode')
     isInitialized.value = false
     isInitializing.value = false
-    console.log('🧹 Dati utente puliti')
+    console.log('Dati utente puliti')
   }
 
   /**
@@ -228,19 +236,57 @@ export function useUser() {
    */
   const refreshCoupons = async () => {
     if (!catalystRowId.value) {
-      console.warn('⚠️ Cannot refresh coupons: user not initialized')
+      console.warn('Cannot refresh coupons: user not initialized')
       return
     }
 
     try {
-      console.log('🔄 Ricaricamento coupon...')
+      console.log('Ricaricamento coupon...')
       const coupons = await getUserCoupons(catalystRowId.value)
       availableCoupons.value = coupons
-      console.log('✅ Coupon ricaricati:', coupons.length)
+      console.log('Coupon ricaricati:', coupons.length)
     } catch (error) {
-      console.error('❌ Errore ricaricamento coupon:', error)
+      console.error('Errore ricaricamento coupon:', error)
       throw error
     }
+  }
+
+  /**
+   * Toggle admin mode (switch between user and admin dashboard)
+   * Persists state in localStorage
+   */
+  function toggleAdminMode() {
+    if (!isAdmin.value) {
+      console.warn('User is not an admin, cannot toggle admin mode')
+      return
+    }
+
+    adminMode.value = !adminMode.value
+    localStorage.setItem('adminMode', adminMode.value.toString())
+    console.log('Admin mode:', adminMode.value ? 'enabled' : 'disabled')
+  }
+
+  /**
+   * Enable admin mode
+   */
+  function enableAdminMode() {
+    if (!isAdmin.value) {
+      console.warn('User is not an admin, cannot enable admin mode')
+      return
+    }
+
+    adminMode.value = true
+    localStorage.setItem('adminMode', 'true')
+    console.log('Admin mode enabled')
+  }
+
+  /**
+   * Disable admin mode
+   */
+  function disableAdminMode() {
+    adminMode.value = false
+    localStorage.setItem('adminMode', 'false')
+    console.log('Admin mode disabled')
   }
 
   return {
@@ -250,6 +296,7 @@ export function useUser() {
     name: readonly(name),
     nickname: readonly(nickname),
     stripeCustomerId: readonly(stripeCustomerId),
+    isAdmin: readonly(isAdmin),
 
     // State MUTABILE (può cambiare durante la sessione)
     credits,
@@ -259,6 +306,9 @@ export function useUser() {
     availableCoupons: readonly(availableCoupons),
     availableCouponsCount,
     firstRechargeBonusAvailable: readonly(firstRechargeBonusAvailable),
+
+    // Admin state
+    adminMode: readonly(adminMode),
 
     // Flags
     isInitialized: readonly(isInitialized),
@@ -272,6 +322,11 @@ export function useUser() {
     addCoupon,
     refreshCoupons,
     clearAll,
-    forceReload
+    forceReload,
+
+    // Admin methods
+    toggleAdminMode,
+    enableAdminMode,
+    disableAdminMode
   }
 }

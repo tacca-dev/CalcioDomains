@@ -32,14 +32,30 @@
           Login
         </button>
 
-        <!-- Show dashboard button when authenticated -->
-        <button
-          v-else
-          @click="$router.push('/dashboard')"
-          class="dashboard-button"
-        >
-          Dashboard
-        </button>
+        <!-- Show dashboard buttons when authenticated -->
+        <template v-else>
+          <!-- Admin mode badge -->
+          <div v-if="adminMode" class="admin-badge">
+            ADMIN MODE
+          </div>
+
+          <!-- Dashboard button -->
+          <button
+            @click="$router.push('/dashboard')"
+            class="dashboard-button"
+          >
+            Dashboard
+          </button>
+
+          <!-- Admin Panel button (only for admins) -->
+          <button
+            v-if="isAdmin"
+            @click="$router.push('/admin')"
+            class="admin-button"
+          >
+            Admin Panel
+          </button>
+        </template>
       </div>
     </div>
   </nav>
@@ -48,6 +64,7 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import CartIcon from './CartIcon.vue'
+import { useUser } from '@/composables/useUser'
 // import { ref, onMounted } from 'vue'
 // import { isAuthenticated as checkAuth, getCurrentUser, signIn, signOut } from '../services/auth'
 
@@ -60,6 +77,9 @@ const {
   isAuthenticated,
   isLoading
 } = useAuth0()
+
+// Get user state
+const { isAdmin, adminMode } = useUser()
 
 // Login function
 const login = () => {
@@ -218,6 +238,38 @@ const login = () => {
 
 .dashboard-button:active {
   background: #f3f4f6;
+}
+
+.admin-button {
+  background: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-button:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+.admin-button:active {
+  background: #047857;
+}
+
+.admin-badge {
+  background: #ecfdf5;
+  color: #10b981;
+  border: 1px solid #10b981;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
 .loading-text {
