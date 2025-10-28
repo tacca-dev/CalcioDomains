@@ -463,7 +463,6 @@ const goToUserDashboard = () => {
 }
 
 .role-cell {
-  text-align: center;
   font-weight: 500;
   color: #374151;
 }
