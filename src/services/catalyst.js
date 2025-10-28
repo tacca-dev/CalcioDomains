@@ -743,3 +743,28 @@ export async function getAllDomainsAdmin() {
     throw error
   }
 }
+
+/**
+ * Get all coupons with owner and transfer info (Admin only)
+ * @returns {Promise<Array>} Array of all coupons with details
+ */
+export async function getAllCouponsAdmin() {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-all-coupons-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get coupons data')
+    }
+
+    return parsedOutput.coupons
+  } catch (error) {
+    console.error('Error getting all coupons (admin):', error)
+    throw error
+  }
+}

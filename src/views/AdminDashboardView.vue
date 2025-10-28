@@ -181,7 +181,66 @@
       <!-- Coupon -->
       <div v-if="activeTab === 'coupons'" class="content-section">
         <h2>Gestione Coupon</h2>
-        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+        <div class="search-box">
+          <input
+            v-model="couponsSearchQuery"
+            type="text"
+            placeholder="Cerca per codice o proprietario..."
+            class="search-input"
+          />
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="couponsLoading" class="state-message">
+          Caricamento coupon...
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="couponsError" class="state-message error">
+          Errore: {{ couponsError }}
+        </div>
+
+        <!-- Coupons table -->
+        <div v-else-if="filteredCoupons.length > 0" class="table-container">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Codice</th>
+                <th>Proprietario</th>
+                <th>Importo</th>
+                <th>Status</th>
+                <th>Ultimo Trasferimento</th>
+                <th>Data Creazione</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="coupon in filteredCoupons" :key="coupon.couponId">
+                <td class="nickname-cell">{{ coupon.couponCode }}</td>
+                <td class="email-cell">{{ coupon.ownerNickname }}</td>
+                <td class="credits-cell">{{ formatCurrency(coupon.amount) }}</td>
+                <td>
+                  <span :class="coupon.status === 'available' ? 'status-available' : 'status-used'">
+                    {{ coupon.status === 'available' ? 'Disponibile' : 'Usato' }}
+                  </span>
+                </td>
+                <td class="email-cell">
+                  <span v-if="coupon.lastTransferFrom">
+                    Da {{ coupon.lastTransferFrom }}<br/>
+                    <span class="date-cell">{{ formatDate(coupon.lastTransferDate) }}</span>
+                  </span>
+                  <span v-else>-</span>
+                </td>
+                <td class="date-cell">{{ formatDate(coupon.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="state-message">
+          <span v-if="couponsSearchQuery">Nessun coupon trovato per "{{ couponsSearchQuery }}"</span>
+          <span v-else>Nessun coupon nel sistema</span>
+        </div>
       </div>
 
       <!-- Prezzi -->
@@ -204,7 +263,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
 import { useToast } from '@/composables/useToast'
-import { getAllUsersAdmin, getAllDomainsAdmin } from '@/services/catalyst'
+import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin } from '@/services/catalyst'
 
 const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
@@ -223,6 +282,12 @@ const domainsData = ref([])
 const domainsLoading = ref(false)
 const domainsError = ref(null)
 const domainsSearchQuery = ref('')
+
+// Coupons management state
+const couponsData = ref([])
+const couponsLoading = ref(false)
+const couponsError = ref(null)
+const couponsSearchQuery = ref('')
 
 // Load users data
 const loadUsers = async () => {
@@ -291,6 +356,40 @@ const filteredDomains = computed(() => {
   })
 })
 
+// Load coupons data
+const loadCoupons = async () => {
+  couponsLoading.value = true
+  couponsError.value = null
+
+  try {
+    const coupons = await getAllCouponsAdmin()
+    couponsData.value = coupons
+    console.log('Loaded', coupons.length, 'coupons')
+  } catch (error) {
+    console.error('Error loading coupons:', error)
+    couponsError.value = error.message || 'Errore nel caricamento dei coupon'
+    showToast('Errore nel caricamento dei coupon', 'error')
+  } finally {
+    couponsLoading.value = false
+  }
+}
+
+// Filtered coupons based on search query
+const filteredCoupons = computed(() => {
+  if (!couponsSearchQuery.value.trim()) {
+    return couponsData.value
+  }
+
+  const query = couponsSearchQuery.value.toLowerCase().trim()
+
+  return couponsData.value.filter(coupon => {
+    const couponCode = (coupon.couponCode || '').toLowerCase()
+    const ownerNickname = (coupon.ownerNickname || '').toLowerCase()
+    const ownerEmail = (coupon.ownerEmail || '').toLowerCase()
+    return couponCode.includes(query) || ownerNickname.includes(query) || ownerEmail.includes(query)
+  })
+})
+
 // Format currency
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('it-IT', {
@@ -337,8 +436,13 @@ onMounted(async () => {
   enableAdminMode()
   console.log('Admin dashboard accessed successfully')
 
-  // Load users and domains data
-  await Promise.all([loadUsers(), loadDomains()])
+  // Load all admin data (don't block on errors)
+  try {
+    await Promise.all([loadUsers(), loadDomains(), loadCoupons()])
+  } catch (error) {
+    console.error('Error loading admin data:', error)
+    // Errors are already handled in individual load functions
+  }
 })
 
 // Quando l'utente lascia la admin dashboard, disabilita admin mode
@@ -557,6 +661,17 @@ const goToUserDashboard = () => {
 .date-cell {
   color: #6b7280;
   font-size: 0.875rem;
+}
+
+/* Coupon status badges */
+.status-available {
+  font-weight: 500;
+  color: #10b981;
+}
+
+.status-used {
+  font-weight: 500;
+  color: #6b7280;
 }
 
 /* Responsive */
