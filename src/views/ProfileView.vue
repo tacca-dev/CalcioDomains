@@ -137,6 +137,43 @@
           <span>{{ successMessage }}</span>
         </div>
       </div>
+
+      <!-- Stripe Connect Section -->
+      <div class="edit-section">
+        <h2 class="section-title">PAGAMENTI E VENDITE</h2>
+        <p class="section-description">Account per vendere domini</p>
+
+        <div class="stripe-connect-card">
+          <div class="stripe-header">
+            <div class="stripe-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="stripe-info">
+              <h3 class="stripe-title">Stato Account</h3>
+              <p class="stripe-status">
+                <span class="status-badge status-not-configured">Non configurato</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="stripe-description">
+            <p>Configura l'account per vendere domini</p>
+          </div>
+
+          <div class="stripe-actions">
+            <button class="button button-stripe-config">
+              <span class="button-icon">⚙️</span>
+              Configura
+            </button>
+            <button class="button button-stripe-refresh" disabled>
+              <span class="button-icon">🔄</span>
+              Aggiorna
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -770,6 +807,113 @@ onMounted(() => {
   background: #000000;
 }
 
+/* Stripe Connect Card */
+.stripe-connect-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.stripe-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stripe-icon {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a1a;
+  flex-shrink: 0;
+}
+
+.stripe-info {
+  flex: 1;
+}
+
+.stripe-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.stripe-status {
+  margin: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-not-configured {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-configured {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.stripe-description {
+  margin-bottom: 1.5rem;
+}
+
+.stripe-description p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.stripe-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.button-stripe-config {
+  background: #10b981;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.button-stripe-config:hover:not(:disabled) {
+  background: #059669;
+}
+
+.button-stripe-refresh {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.button-stripe-refresh:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.button-icon {
+  font-size: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .profile-container {
@@ -789,6 +933,14 @@ onMounted(() => {
   }
 
   .button {
+    width: 100%;
+  }
+
+  .stripe-actions {
+    flex-direction: column;
+  }
+
+  .stripe-actions .button {
     width: 100%;
   }
 }
