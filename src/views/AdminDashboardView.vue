@@ -64,7 +64,124 @@
       <!-- Statistiche -->
       <div v-if="activeTab === 'stats'" class="content-section">
         <h2>Statistiche Generali</h2>
-        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+
+        <!-- Loading state -->
+        <div v-if="usersLoading || domainsLoading || couponsLoading" class="state-message">
+          Caricamento statistiche...
+        </div>
+
+        <!-- Statistics cards -->
+        <div v-else class="stats-grid">
+          <!-- Utenti -->
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+              <h3 class="stat-title">Utenti</h3>
+              <div class="stat-details">
+                <div class="stat-row">
+                  <span class="stat-label">Totale Registrati</span>
+                  <span class="stat-value">{{ usersData.length }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Amministratori</span>
+                  <span class="stat-value">{{ totalAdmins }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Utenti Standard</span>
+                  <span class="stat-value">{{ totalRegularUsers }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Domini -->
+          <div class="stat-card">
+            <div class="stat-icon">🌐</div>
+            <div class="stat-content">
+              <h3 class="stat-title">Domini</h3>
+              <div class="stat-details">
+                <div class="stat-row">
+                  <span class="stat-label">Totale Venduti</span>
+                  <span class="stat-value">{{ domainsData.length }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Revenue Totale</span>
+                  <span class="stat-value highlight">{{ formatCurrency(totalRevenue) }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Prezzo Medio</span>
+                  <span class="stat-value">{{ formatCurrency(averageDomainPrice) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Coupon -->
+          <div class="stat-card">
+            <div class="stat-icon">🎟️</div>
+            <div class="stat-content">
+              <h3 class="stat-title">Coupon</h3>
+              <div class="stat-details">
+                <div class="stat-row">
+                  <span class="stat-label">Totale Creati</span>
+                  <span class="stat-value">{{ couponsData.length }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Disponibili</span>
+                  <span class="stat-value success">{{ availableCoupons }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Usati</span>
+                  <span class="stat-value muted">{{ usedCoupons }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Valore Totale Disponibile</span>
+                  <span class="stat-value">{{ formatCurrency(totalAvailableCouponValue) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ordini -->
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+              <h3 class="stat-title">Ordini</h3>
+              <div class="stat-details">
+                <div class="stat-row">
+                  <span class="stat-label">Totale Ordini Pagati</span>
+                  <span class="stat-value">{{ totalOrders }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Ordine Medio</span>
+                  <span class="stat-value">{{ formatCurrency(averageOrderValue) }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Domini per Ordine (Media)</span>
+                  <span class="stat-value">{{ averageDomainsPerOrder }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crediti -->
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+              <h3 class="stat-title">Crediti Utenti</h3>
+              <div class="stat-details">
+                <div class="stat-row">
+                  <span class="stat-label">Credito Totale Sistema</span>
+                  <span class="stat-value highlight">{{ formatCurrency(totalSystemCredits) }}</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Credito Medio per Utente</span>
+                  <span class="stat-value">{{ formatCurrency(averageUserCredits) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Utenti -->
@@ -441,6 +558,68 @@ const filteredUsers = computed(() => {
     const email = (user.email || '').toLowerCase()
     return nickname.includes(query) || email.includes(query)
   })
+})
+
+// Statistics computed properties
+const totalAdmins = computed(() => {
+  return usersData.value.filter(user => user.isAdmin).length
+})
+
+const totalRegularUsers = computed(() => {
+  return usersData.value.filter(user => !user.isAdmin).length
+})
+
+const totalRevenue = computed(() => {
+  return domainsData.value.reduce((sum, domain) => sum + (domain.price || 0), 0)
+})
+
+const averageDomainPrice = computed(() => {
+  if (domainsData.value.length === 0) return 0
+  return totalRevenue.value / domainsData.value.length
+})
+
+const availableCoupons = computed(() => {
+  return couponsData.value.filter(coupon => coupon.status === 'available').length
+})
+
+const usedCoupons = computed(() => {
+  return couponsData.value.filter(coupon => coupon.status === 'used').length
+})
+
+const totalAvailableCouponValue = computed(() => {
+  return couponsData.value
+    .filter(coupon => coupon.status === 'available')
+    .reduce((sum, coupon) => sum + (coupon.amount || 0), 0)
+})
+
+const totalOrders = computed(() => {
+  // Count unique orders from domains (since each domain has purchaseDate from an order)
+  const orderDates = new Set()
+  usersData.value.forEach(user => {
+    if (user.totalOrders > 0) {
+      orderDates.add(user.rowId + '-' + user.totalOrders)
+    }
+  })
+  return usersData.value.reduce((sum, user) => sum + (user.totalOrders || 0), 0)
+})
+
+const averageOrderValue = computed(() => {
+  if (totalOrders.value === 0) return 0
+  return totalRevenue.value / totalOrders.value
+})
+
+const averageDomainsPerOrder = computed(() => {
+  if (totalOrders.value === 0) return 0
+  return (domainsData.value.length / totalOrders.value).toFixed(1)
+})
+
+const totalSystemCredits = computed(() => {
+  return usersData.value.reduce((sum, user) => sum + (user.credits || 0), 0)
+})
+
+const averageUserCredits = computed(() => {
+  if (usersData.value.length === 0) return 0
+  return totalSystemCredits.value / usersData.value.length
 })
 
 // Load domains data
@@ -1030,6 +1209,85 @@ const goToUserDashboard = () => {
   margin: 0;
 }
 
+/* Statistics */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.stat-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  transition: all 0.15s;
+}
+
+.stat-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 1rem 0;
+}
+
+.stat-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+.stat-value.highlight {
+  color: #10b981;
+  font-size: 1.1rem;
+}
+
+.stat-value.success {
+  color: #10b981;
+}
+
+.stat-value.muted {
+  color: #6b7280;
+}
+
 /* Prompts management */
 .prompts-list {
   display: flex;
@@ -1120,6 +1378,14 @@ const goToUserDashboard = () => {
   .users-table th,
   .users-table td {
     padding: 0.5rem 0.75rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 1.25rem;
   }
 }
 </style>
