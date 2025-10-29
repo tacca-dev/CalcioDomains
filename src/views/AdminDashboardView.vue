@@ -74,7 +74,6 @@
         <div v-else class="stats-grid">
           <!-- Utenti -->
           <div class="stat-card">
-            <div class="stat-icon">👥</div>
             <div class="stat-content">
               <h3 class="stat-title">Utenti</h3>
               <div class="stat-details">
@@ -96,7 +95,6 @@
 
           <!-- Domini -->
           <div class="stat-card">
-            <div class="stat-icon">🌐</div>
             <div class="stat-content">
               <h3 class="stat-title">Domini</h3>
               <div class="stat-details">
@@ -118,7 +116,6 @@
 
           <!-- Coupon -->
           <div class="stat-card">
-            <div class="stat-icon">🎟️</div>
             <div class="stat-content">
               <h3 class="stat-title">Coupon</h3>
               <div class="stat-details">
@@ -144,7 +141,6 @@
 
           <!-- Ordini -->
           <div class="stat-card">
-            <div class="stat-icon">📦</div>
             <div class="stat-content">
               <h3 class="stat-title">Ordini</h3>
               <div class="stat-details">
@@ -166,7 +162,6 @@
 
           <!-- Crediti -->
           <div class="stat-card">
-            <div class="stat-icon">💰</div>
             <div class="stat-content">
               <h3 class="stat-title">Crediti Utenti</h3>
               <div class="stat-details">
@@ -1222,8 +1217,6 @@ const goToUserDashboard = () => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 1.5rem;
-  display: flex;
-  gap: 1rem;
   transition: all 0.15s;
 }
 
@@ -1232,14 +1225,8 @@ const goToUserDashboard = () => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.stat-icon {
-  font-size: 2rem;
-  line-height: 1;
-}
-
 .stat-content {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 .stat-title {
