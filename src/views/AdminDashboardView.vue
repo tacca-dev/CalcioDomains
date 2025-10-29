@@ -246,7 +246,63 @@
       <!-- Prezzi -->
       <div v-if="activeTab === 'pricing'" class="content-section">
         <h2>Gestione Prezzi</h2>
-        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+
+        <!-- Loading state -->
+        <div v-if="pricingLoading" class="state-message">
+          Caricamento configurazione prezzi...
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="pricingError" class="state-message error">
+          Errore: {{ pricingError }}
+        </div>
+
+        <!-- Pricing config -->
+        <div v-else>
+          <h3 class="section-subtitle">Coefficienti Categorie Domini</h3>
+          <p class="section-description">
+            Modifica i coefficienti moltiplicativi per ogni categoria di dominio.
+          </p>
+
+          <div class="pricing-grid">
+            <div v-for="level in domainLevels" :key="level.rowId" class="pricing-item">
+              <label class="pricing-label">{{ level.level }}</label>
+              <input
+                v-model.number="level.coefficient"
+                type="number"
+                step="0.01"
+                min="0.01"
+                class="pricing-input"
+                @input="markAsModified(level.rowId)"
+              />
+              <span v-if="modifiedLevels.has(level.rowId)" class="modified-indicator">*</span>
+            </div>
+          </div>
+
+          <div class="pricing-actions">
+            <button
+              @click="savePricingChanges"
+              :disabled="modifiedLevels.size === 0 || savingPricing"
+              class="save-button"
+            >
+              {{ savingPricing ? 'Salvataggio...' : 'Salva Modifiche' }}
+            </button>
+            <button
+              @click="resetPricingChanges"
+              :disabled="modifiedLevels.size === 0"
+              class="cancel-button"
+            >
+              Annulla
+            </button>
+          </div>
+
+          <div class="bonus-info">
+            <h3 class="section-subtitle">Bonus Ricariche</h3>
+            <p class="bonus-description">
+              <strong>Bonus Primo Ricarico:</strong> 50% dell'importo ricaricato (configurato nel backend)
+            </p>
+          </div>
+        </div>
       </div>
 
       <!-- Prompt -->
@@ -263,7 +319,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
 import { useToast } from '@/composables/useToast'
-import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin } from '@/services/catalyst'
+import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin, getPricingConfig, updateDomainLevel } from '@/services/catalyst'
 
 const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
@@ -288,6 +344,14 @@ const couponsData = ref([])
 const couponsLoading = ref(false)
 const couponsError = ref(null)
 const couponsSearchQuery = ref('')
+
+// Pricing management state
+const domainLevels = ref([])
+const originalLevels = ref([])
+const pricingLoading = ref(false)
+const pricingError = ref(null)
+const modifiedLevels = ref(new Set())
+const savingPricing = ref(false)
 
 // Load users data
 const loadUsers = async () => {
@@ -364,7 +428,7 @@ const loadCoupons = async () => {
   try {
     const coupons = await getAllCouponsAdmin()
     couponsData.value = coupons
-    console.log('Loaded', coupons.length, 'coupons')
+    console.log('Loaded', coupons.length, 'coupons:', coupons)
   } catch (error) {
     console.error('Error loading coupons:', error)
     couponsError.value = error.message || 'Errore nel caricamento dei coupon'
@@ -389,6 +453,67 @@ const filteredCoupons = computed(() => {
     return couponCode.includes(query) || ownerNickname.includes(query) || ownerEmail.includes(query)
   })
 })
+
+// Load pricing config
+const loadPricing = async () => {
+  pricingLoading.value = true
+  pricingError.value = null
+
+  try {
+    console.log('Loading pricing config...')
+    const levels = await getPricingConfig()
+    domainLevels.value = levels
+    // Keep a copy of original values
+    originalLevels.value = JSON.parse(JSON.stringify(levels))
+    modifiedLevels.value.clear()
+    console.log('Loaded', levels.length, 'domain levels')
+  } catch (error) {
+    console.error('Error loading pricing config:', error)
+    pricingError.value = error.message || 'Errore nel caricamento configurazione prezzi'
+    showToast('Errore nel caricamento configurazione prezzi', 'error')
+  } finally {
+    pricingLoading.value = false
+  }
+}
+
+// Mark level as modified
+const markAsModified = (rowId) => {
+  modifiedLevels.value.add(rowId)
+}
+
+// Save pricing changes
+const savePricingChanges = async () => {
+  if (modifiedLevels.value.size === 0) return
+
+  savingPricing.value = true
+
+  try {
+    // Update each modified level
+    const updates = Array.from(modifiedLevels.value).map(rowId => {
+      const level = domainLevels.value.find(l => l.rowId === rowId)
+      return updateDomainLevel(level.rowId, level.coefficient)
+    })
+
+    await Promise.all(updates)
+
+    // Reload pricing config to get fresh data
+    await loadPricing()
+
+    showToast('Modifiche salvate con successo', 'success')
+    modifiedLevels.value.clear()
+  } catch (error) {
+    console.error('Error saving pricing changes:', error)
+    showToast('Errore nel salvataggio delle modifiche', 'error')
+  } finally {
+    savingPricing.value = false
+  }
+}
+
+// Reset pricing changes
+const resetPricingChanges = () => {
+  domainLevels.value = JSON.parse(JSON.stringify(originalLevels.value))
+  modifiedLevels.value.clear()
+}
 
 // Format currency
 const formatCurrency = (amount) => {
@@ -438,7 +563,7 @@ onMounted(async () => {
 
   // Load all admin data (don't block on errors)
   try {
-    await Promise.all([loadUsers(), loadDomains(), loadCoupons()])
+    await Promise.all([loadUsers(), loadDomains(), loadCoupons(), loadPricing()])
   } catch (error) {
     console.error('Error loading admin data:', error)
     // Errors are already handled in individual load functions
@@ -672,6 +797,119 @@ const goToUserDashboard = () => {
 .status-used {
   font-weight: 500;
   color: #6b7280;
+}
+
+/* Pricing management */
+.section-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.section-description {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem 0;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pricing-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pricing-label {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+}
+
+.pricing-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.15s;
+}
+
+.pricing-input:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.modified-indicator {
+  color: #10b981;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+.pricing-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.save-button {
+  padding: 0.5rem 1.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.save-button:hover:not(:disabled) {
+  background: #059669;
+}
+
+.save-button:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  padding: 0.5rem 1.5rem;
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.cancel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bonus-info {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bonus-description {
+  color: #374151;
+  font-size: 0.95rem;
+  margin: 0;
 }
 
 /* Responsive */

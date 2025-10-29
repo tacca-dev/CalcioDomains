@@ -768,3 +768,56 @@ export async function getAllCouponsAdmin() {
     throw error
   }
 }
+
+/**
+ * Get pricing configuration (Admin only)
+ * @returns {Promise<Array>} Array of domain levels with coefficients
+ */
+export async function getPricingConfig() {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-pricing-config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get pricing config')
+    }
+
+    return parsedOutput.domainLevels
+  } catch (error) {
+    console.error('Error getting pricing config (admin):', error)
+    throw error
+  }
+}
+
+/**
+ * Update domain level coefficient (Admin only)
+ * @param {number} rowId - Domain level ROWID
+ * @param {number} coefficient - New coefficient value
+ * @returns {Promise<Object>} Update result
+ */
+export async function updateDomainLevel(rowId, coefficient) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/update-domain-level`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rowId, coefficient })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to update domain level')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error updating domain level (admin):', error)
+    throw error
+  }
+}
