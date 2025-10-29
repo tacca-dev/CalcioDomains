@@ -153,23 +153,64 @@
             <div class="stripe-info">
               <h3 class="stripe-title">Stato Account</h3>
               <p class="stripe-status">
-                <span class="status-badge status-not-configured">Non configurato</span>
+                <span class="status-badge" :class="stripeStatusClass">
+                  {{ stripeStatusText }}
+                </span>
               </p>
             </div>
           </div>
 
           <div class="stripe-description">
-            <p>Configura l'account per vendere domini</p>
+            <p v-if="!stripeAccountId">
+              Configura un account Stripe per iniziare a vendere domini sulla piattaforma.
+            </p>
+            <p v-else-if="!stripeChargesEnabled">
+              Completa la configurazione del tuo account Stripe per attivare le vendite.
+            </p>
+            <p v-else>
+              Il tuo account è attivo. Visualizza il dashboard per gestire pagamenti e ricevute.
+            </p>
           </div>
 
           <div class="stripe-actions">
-            <button class="button button-stripe-config">
-              <span class="button-icon">⚙️</span>
-              Configura
+            <button
+              v-if="!stripeAccountId"
+              class="button button-stripe-config"
+              @click="handleCreateStripeAccount"
+              :disabled="isCreatingAccount"
+            >
+              <span v-if="isCreatingAccount">Creazione...</span>
+              <span v-else>Configura</span>
             </button>
-            <button class="button button-stripe-refresh" disabled>
-              <span class="button-icon">🔄</span>
-              Aggiorna
+
+            <button
+              v-else-if="!stripeChargesEnabled"
+              class="button button-stripe-config"
+              @click="handleContinueOnboarding"
+              :disabled="isLoadingLink"
+            >
+              <span v-if="isLoadingLink">Caricamento...</span>
+              <span v-else>Completa Configurazione</span>
+            </button>
+
+            <button
+              v-else
+              class="button button-stripe-config"
+              @click="handleOpenDashboard"
+              :disabled="isLoadingDashboard"
+            >
+              <span v-if="isLoadingDashboard">Caricamento...</span>
+              <span v-else>Apri Dashboard</span>
+            </button>
+
+            <button
+              v-if="stripeAccountId"
+              class="button button-stripe-refresh"
+              @click="handleRefreshStatus"
+              :disabled="isRefreshing"
+            >
+              <span v-if="isRefreshing">Aggiornamento...</span>
+              <span v-else>Aggiorna</span>
             </button>
           </div>
         </div>
@@ -179,10 +220,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
-import { getUserData, updateUserProfile, getAvatarUrl } from '@/services/catalyst'
+import { getUserData, updateUserProfile, getAvatarUrl, createStripeConnectAccount, createStripeAccountLink, getStripeAccountStatus, createStripeDashboardLink } from '@/services/catalyst'
 
 const { user, getAccessTokenSilently } = useAuth0()
 
@@ -204,6 +245,28 @@ const formData = ref({
 const avatarPreview = ref(null)
 const currentAvatarUrl = ref(null)
 const fileInput = ref(null)
+
+// Stripe Connect state
+const stripeAccountId = ref(null)
+const stripeChargesEnabled = ref(false)
+const stripeDetailsSubmitted = ref(false)
+const isCreatingAccount = ref(false)
+const isLoadingLink = ref(false)
+const isLoadingDashboard = ref(false)
+const isRefreshing = ref(false)
+
+// Computed Stripe status
+const stripeStatusClass = computed(() => {
+  if (!stripeAccountId.value) return 'status-not-configured'
+  if (!stripeChargesEnabled.value) return 'status-pending'
+  return 'status-configured'
+})
+
+const stripeStatusText = computed(() => {
+  if (!stripeAccountId.value) return 'Non configurato'
+  if (!stripeChargesEnabled.value) return 'Configurazione incompleta'
+  return 'Attivo'
+})
 
 // Load user data from Catalyst
 const loadUserMetadata = async () => {
@@ -249,12 +312,22 @@ const loadUserMetadata = async () => {
       currentAvatarUrl.value = getAvatarUrl(catalystRowId)
     }
 
+    // 5. Load Stripe Connect status
+    loadStripeStatus(userData)
+
   } catch (err) {
     console.error('Error loading user data:', err)
     error.value = err.response?.data?.error || err.message || 'Impossibile caricare i dati del profilo'
   } finally {
     isLoading.value = false
   }
+}
+
+// Load Stripe Connect status from user data
+const loadStripeStatus = (userData) => {
+  stripeAccountId.value = userData.sc_account_id || null
+  stripeChargesEnabled.value = userData.sc_charges_enabled || false
+  stripeDetailsSubmitted.value = userData.sc_details_submitted || false
 }
 
 // Handle file change (avatar upload)
@@ -395,9 +468,144 @@ const resetForm = () => {
   }
 }
 
+// Helper: Get catalystRowId from Auth0
+const getCatalystRowId = async () => {
+  const token = await getAccessTokenSilently({
+    authorizationParams: {
+      audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+      scope: 'read:current_user'
+    }
+  })
+
+  const auth0Response = await axios.get(
+    `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+
+  const catalystRowId = auth0Response.data.user_metadata?.catalystRowId
+  if (!catalystRowId) {
+    throw new Error('catalystRowId non trovato')
+  }
+
+  return catalystRowId
+}
+
+// ============================================================================
+// STRIPE CONNECT HANDLERS
+// ============================================================================
+
+// Create Stripe Connect account
+const handleCreateStripeAccount = async () => {
+  try {
+    isCreatingAccount.value = true
+    error.value = null
+
+    const catalystRowId = await getCatalystRowId()
+
+    // Create Stripe Express account
+    const response = await createStripeConnectAccount(catalystRowId, user.value.email)
+
+    stripeAccountId.value = response.accountId
+
+    // Start onboarding flow
+    await handleContinueOnboarding()
+
+  } catch (err) {
+    console.error('Error creating Stripe account:', err)
+    error.value = err.message || 'Impossibile creare account Stripe'
+  } finally {
+    isCreatingAccount.value = false
+  }
+}
+
+// Continue onboarding
+const handleContinueOnboarding = async () => {
+  try {
+    isLoadingLink.value = true
+    error.value = null
+
+    const returnUrl = `${window.location.origin}/profile?stripe=success`
+    const refreshUrl = `${window.location.origin}/profile?stripe=refresh`
+
+    const response = await createStripeAccountLink(stripeAccountId.value, returnUrl, refreshUrl)
+
+    // Redirect to Stripe onboarding
+    window.location.href = response.url
+
+  } catch (err) {
+    console.error('Error creating account link:', err)
+    error.value = err.message || 'Impossibile avviare configurazione'
+  } finally {
+    isLoadingLink.value = false
+  }
+}
+
+// Refresh status
+const handleRefreshStatus = async () => {
+  try {
+    isRefreshing.value = true
+    error.value = null
+
+    const catalystRowId = await getCatalystRowId()
+    const response = await getStripeAccountStatus(catalystRowId)
+
+    if (response.hasAccount) {
+      stripeAccountId.value = response.accountId
+      stripeChargesEnabled.value = response.chargesEnabled
+      stripeDetailsSubmitted.value = response.detailsSubmitted
+
+      successMessage.value = 'Stato aggiornato con successo!'
+      setTimeout(() => { successMessage.value = '' }, 3000)
+    }
+
+  } catch (err) {
+    console.error('Error refreshing status:', err)
+    error.value = err.message || 'Impossibile aggiornare stato'
+  } finally {
+    isRefreshing.value = false
+  }
+}
+
+// Open dashboard
+const handleOpenDashboard = async () => {
+  try {
+    isLoadingDashboard.value = true
+    error.value = null
+
+    const response = await createStripeDashboardLink(stripeAccountId.value)
+
+    // Open dashboard in new tab
+    window.open(response.url, '_blank')
+
+  } catch (err) {
+    console.error('Error opening dashboard:', err)
+    error.value = err.message || 'Impossibile aprire dashboard'
+  } finally {
+    isLoadingDashboard.value = false
+  }
+}
+
 // Load metadata on mount
-onMounted(() => {
-  loadUserMetadata()
+onMounted(async () => {
+  await loadUserMetadata()
+
+  // Check for Stripe return params
+  const urlParams = new URLSearchParams(window.location.search)
+  const stripeParam = urlParams.get('stripe')
+
+  if (stripeParam === 'success') {
+    successMessage.value = 'Account Stripe configurato con successo!'
+    await handleRefreshStatus()
+    // Clean URL
+    window.history.replaceState({}, '', '/profile')
+  } else if (stripeParam === 'refresh') {
+    // Link expired, restart onboarding
+    await handleContinueOnboarding()
+  }
 })
 </script>
 
@@ -868,6 +1076,11 @@ onMounted(() => {
   color: #065f46;
 }
 
+.status-pending {
+  background: #fed7aa;
+  color: #92400e;
+}
+
 .stripe-description {
   margin-bottom: 1.5rem;
 }
@@ -887,9 +1100,6 @@ onMounted(() => {
   background: #10b981;
   color: white;
   border: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .button-stripe-config:hover:not(:disabled) {
@@ -900,18 +1110,11 @@ onMounted(() => {
   background: white;
   border: 1px solid #e5e7eb;
   color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .button-stripe-refresh:hover:not(:disabled) {
   background: #f9fafb;
   border-color: #d1d5db;
-}
-
-.button-icon {
-  font-size: 1rem;
 }
 
 /* Responsive */

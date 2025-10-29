@@ -874,3 +874,118 @@ export async function updatePrompt(rowId, content) {
     throw error
   }
 }
+
+// ============================================================================
+// STRIPE CONNECT FUNCTIONS
+// ============================================================================
+
+/**
+ * Create Stripe Connect Express account for user
+ * @param {number} catalystRowId - User's ROWID
+ * @param {string} email - User's email for prefill
+ * @returns {Promise<Object>} Result with accountId
+ */
+export async function createStripeConnectAccount(catalystRowId, email) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/create-sc-account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ catalystRowId, email })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to create Stripe Connect account')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error creating Stripe Connect account:', error)
+    throw error
+  }
+}
+
+/**
+ * Create AccountLink for Stripe Connect onboarding
+ * @param {string} accountId - Stripe account ID
+ * @param {string} returnUrl - URL to redirect after success
+ * @param {string} refreshUrl - URL to redirect if link expires
+ * @returns {Promise<Object>} Result with onboarding URL
+ */
+export async function createStripeAccountLink(accountId, returnUrl, refreshUrl) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/create-sc-account-link`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountId, returnUrl, refreshUrl })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to create account link')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error creating Stripe account link:', error)
+    throw error
+  }
+}
+
+/**
+ * Get Stripe Connect account status and update database
+ * @param {number} catalystRowId - User's ROWID
+ * @returns {Promise<Object>} Account status details
+ */
+export async function getStripeAccountStatus(catalystRowId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-sc-account-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ catalystRowId })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get account status')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error getting Stripe account status:', error)
+    throw error
+  }
+}
+
+/**
+ * Create login link to Stripe Express Dashboard
+ * @param {string} accountId - Stripe account ID
+ * @returns {Promise<Object>} Result with dashboard URL
+ */
+export async function createStripeDashboardLink(accountId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/create-sc-dashboard-link`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountId })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to create dashboard link')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error creating Stripe dashboard link:', error)
+    throw error
+  }
+}
