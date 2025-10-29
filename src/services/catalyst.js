@@ -821,3 +821,56 @@ export async function updateDomainLevel(rowId, coefficient) {
     throw error
   }
 }
+
+/**
+ * Get all AI prompts (Admin only)
+ * @returns {Promise<Array>} Array of all prompts
+ */
+export async function getPromptsAdmin() {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-prompts-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get prompts')
+    }
+
+    return parsedOutput.prompts
+  } catch (error) {
+    console.error('Error getting prompts (admin):', error)
+    throw error
+  }
+}
+
+/**
+ * Update AI prompt content (Admin only)
+ * @param {number} rowId - Prompt ROWID
+ * @param {string} content - New prompt content
+ * @returns {Promise<Object>} Update result
+ */
+export async function updatePrompt(rowId, content) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/update-prompt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rowId, content })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to update prompt')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error updating prompt (admin):', error)
+    throw error
+  }
+}

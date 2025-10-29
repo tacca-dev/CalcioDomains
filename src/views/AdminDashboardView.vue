@@ -308,7 +308,56 @@
       <!-- Prompt -->
       <div v-if="activeTab === 'prompts'" class="content-section">
         <h2>Modifica Prompt</h2>
-        <p class="placeholder">Questa sezione sarà implementata nelle prossime fasi.</p>
+
+        <!-- Loading state -->
+        <div v-if="promptsLoading" class="state-message">
+          Caricamento prompt...
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="promptsError" class="state-message error">
+          Errore: {{ promptsError }}
+        </div>
+
+        <!-- Prompts editor -->
+        <div v-else>
+          <p class="section-description">
+            Modifica i prompt AI utilizzati dal sistema per la valutazione dei domini.
+          </p>
+
+          <div class="prompts-list">
+            <div v-for="prompt in promptsData" :key="prompt.rowId" class="prompt-item">
+              <div class="prompt-header">
+                <label class="prompt-label">{{ prompt.keyname }}</label>
+                <span v-if="modifiedPrompts.has(prompt.rowId)" class="modified-indicator">*</span>
+              </div>
+              <p v-if="prompt.description" class="prompt-description">{{ prompt.description }}</p>
+              <textarea
+                v-model="prompt.content"
+                class="prompt-textarea"
+                rows="8"
+                @input="markPromptAsModified(prompt.rowId)"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="pricing-actions">
+            <button
+              @click="savePromptChanges"
+              :disabled="modifiedPrompts.size === 0 || savingPrompts"
+              class="save-button"
+            >
+              {{ savingPrompts ? 'Salvataggio...' : 'Salva Modifiche' }}
+            </button>
+            <button
+              @click="resetPromptChanges"
+              :disabled="modifiedPrompts.size === 0"
+              class="cancel-button"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -319,7 +368,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
 import { useToast } from '@/composables/useToast'
-import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin, getPricingConfig, updateDomainLevel } from '@/services/catalyst'
+import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin, getPricingConfig, updateDomainLevel, getPromptsAdmin, updatePrompt } from '@/services/catalyst'
 
 const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
@@ -353,6 +402,14 @@ const pricingError = ref(null)
 const modifiedLevels = ref(new Set())
 const savingPricing = ref(false)
 
+// Prompts management state
+const promptsData = ref([])
+const originalPrompts = ref([])
+const promptsLoading = ref(false)
+const promptsError = ref(null)
+const modifiedPrompts = ref(new Set())
+const savingPrompts = ref(false)
+
 // Load users data
 const loadUsers = async () => {
   usersLoading.value = true
@@ -365,7 +422,7 @@ const loadUsers = async () => {
   } catch (error) {
     console.error('Error loading users:', error)
     usersError.value = error.message || 'Errore nel caricamento degli utenti'
-    showToast('Errore nel caricamento degli utenti', 'error')
+    showToast({ message: 'Errore nel caricamento degli utenti', type: 'error' })
   } finally {
     usersLoading.value = false
   }
@@ -398,7 +455,7 @@ const loadDomains = async () => {
   } catch (error) {
     console.error('Error loading domains:', error)
     domainsError.value = error.message || 'Errore nel caricamento dei domini'
-    showToast('Errore nel caricamento dei domini', 'error')
+    showToast({ message: 'Errore nel caricamento dei domini', type: 'error' })
   } finally {
     domainsLoading.value = false
   }
@@ -432,7 +489,7 @@ const loadCoupons = async () => {
   } catch (error) {
     console.error('Error loading coupons:', error)
     couponsError.value = error.message || 'Errore nel caricamento dei coupon'
-    showToast('Errore nel caricamento dei coupon', 'error')
+    showToast({ message: 'Errore nel caricamento dei coupon', type: 'error' })
   } finally {
     couponsLoading.value = false
   }
@@ -470,7 +527,7 @@ const loadPricing = async () => {
   } catch (error) {
     console.error('Error loading pricing config:', error)
     pricingError.value = error.message || 'Errore nel caricamento configurazione prezzi'
-    showToast('Errore nel caricamento configurazione prezzi', 'error')
+    showToast({ message: 'Errore nel caricamento configurazione prezzi', type: 'error' })
   } finally {
     pricingLoading.value = false
   }
@@ -499,11 +556,11 @@ const savePricingChanges = async () => {
     // Reload pricing config to get fresh data
     await loadPricing()
 
-    showToast('Modifiche salvate con successo', 'success')
+    showToast({ message: 'Modifiche salvate con successo', type: 'success' })
     modifiedLevels.value.clear()
   } catch (error) {
     console.error('Error saving pricing changes:', error)
-    showToast('Errore nel salvataggio delle modifiche', 'error')
+    showToast({ message: 'Errore nel salvataggio delle modifiche', type: 'error' })
   } finally {
     savingPricing.value = false
   }
@@ -513,6 +570,67 @@ const savePricingChanges = async () => {
 const resetPricingChanges = () => {
   domainLevels.value = JSON.parse(JSON.stringify(originalLevels.value))
   modifiedLevels.value.clear()
+}
+
+// Load prompts data
+const loadPrompts = async () => {
+  promptsLoading.value = true
+  promptsError.value = null
+
+  try {
+    console.log('Loading prompts...')
+    const prompts = await getPromptsAdmin()
+    promptsData.value = prompts
+    // Keep a copy of original values
+    originalPrompts.value = JSON.parse(JSON.stringify(prompts))
+    modifiedPrompts.value.clear()
+    console.log('Loaded', prompts.length, 'prompts')
+  } catch (error) {
+    console.error('Error loading prompts:', error)
+    promptsError.value = error.message || 'Errore nel caricamento dei prompt'
+    showToast({ message: 'Errore nel caricamento dei prompt', type: 'error' })
+  } finally {
+    promptsLoading.value = false
+  }
+}
+
+// Mark prompt as modified
+const markPromptAsModified = (rowId) => {
+  modifiedPrompts.value.add(rowId)
+}
+
+// Save prompt changes
+const savePromptChanges = async () => {
+  if (modifiedPrompts.value.size === 0) return
+
+  savingPrompts.value = true
+
+  try {
+    // Update each modified prompt
+    const updates = Array.from(modifiedPrompts.value).map(rowId => {
+      const prompt = promptsData.value.find(p => p.rowId === rowId)
+      return updatePrompt(prompt.rowId, prompt.content)
+    })
+
+    await Promise.all(updates)
+
+    // Reload prompts to get fresh data
+    await loadPrompts()
+
+    showToast({ message: 'Prompt aggiornati con successo', type: 'success' })
+    modifiedPrompts.value.clear()
+  } catch (error) {
+    console.error('Error saving prompt changes:', error)
+    showToast({ message: 'Errore nel salvataggio dei prompt', type: 'error' })
+  } finally {
+    savingPrompts.value = false
+  }
+}
+
+// Reset prompt changes
+const resetPromptChanges = () => {
+  promptsData.value = JSON.parse(JSON.stringify(originalPrompts.value))
+  modifiedPrompts.value.clear()
 }
 
 // Format currency
@@ -552,7 +670,7 @@ onMounted(async () => {
   // Verifica che l'utente sia admin
   if (!isAdmin.value) {
     console.warn('User is not admin, access denied')
-    showToast('Accesso negato: solo gli amministratori possono accedere a questa pagina', 'error')
+    showToast({ message: 'Accesso negato: solo gli amministratori possono accedere a questa pagina', type: 'error' })
     router.push('/dashboard')
     return
   }
@@ -563,7 +681,7 @@ onMounted(async () => {
 
   // Load all admin data (don't block on errors)
   try {
-    await Promise.all([loadUsers(), loadDomains(), loadCoupons(), loadPricing()])
+    await Promise.all([loadUsers(), loadDomains(), loadCoupons(), loadPricing(), loadPrompts()])
   } catch (error) {
     console.error('Error loading admin data:', error)
     // Errors are already handled in individual load functions
@@ -910,6 +1028,56 @@ const goToUserDashboard = () => {
   color: #374151;
   font-size: 0.95rem;
   margin: 0;
+}
+
+/* Prompts management */
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.prompt-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prompt-label {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 1rem;
+  text-transform: capitalize;
+}
+
+.prompt-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.prompt-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+.prompt-textarea:focus {
+  outline: none;
+  border-color: #10b981;
 }
 
 /* Responsive */
