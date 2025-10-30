@@ -718,7 +718,9 @@ const loadCoupons = async () => {
       couponsData.value = [
         {
           ROWID: 'mock-coupon-1',
+          id: 'mock-coupon-1',
           couponCode: 'SUMMER2024',
+          amount: 10,
           discountPercentage: 20,
           status: 'available',
           ownerNickname: 'devuser',
@@ -728,7 +730,9 @@ const loadCoupons = async () => {
         },
         {
           ROWID: 'mock-coupon-2',
+          id: 'mock-coupon-2',
           couponCode: 'WELCOME10',
+          amount: 5,
           discountPercentage: 10,
           status: 'available',
           ownerNickname: 'devuser',
@@ -738,7 +742,9 @@ const loadCoupons = async () => {
         },
         {
           ROWID: 'mock-coupon-3',
+          id: 'mock-coupon-3',
           couponCode: 'PROMO15',
+          amount: 7.5,
           discountPercentage: 15,
           status: 'used',
           ownerNickname: 'testuser',

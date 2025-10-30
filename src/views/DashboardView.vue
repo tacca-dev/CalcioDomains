@@ -353,7 +353,9 @@ const loadUserCoupons = async () => {
       userCoupons.value = [
         {
           ROWID: 'mock-coupon-1',
+          id: 'mock-coupon-1',
           couponCode: 'SUMMER2024',
+          amount: 10,
           discountPercentage: 20,
           status: 'available',
           createdAt: new Date().toISOString(),
@@ -361,7 +363,9 @@ const loadUserCoupons = async () => {
         },
         {
           ROWID: 'mock-coupon-2',
+          id: 'mock-coupon-2',
           couponCode: 'WELCOME10',
+          amount: 5,
           discountPercentage: 10,
           status: 'available',
           createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
