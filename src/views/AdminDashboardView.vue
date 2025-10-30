@@ -486,6 +486,9 @@ const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
 const { showToast } = useToast()
 
+// MOCK AUTH MODE: Check environment variable
+const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+
 const activeTab = ref('stats')
 
 // Users management state
@@ -528,6 +531,31 @@ const loadUsers = async () => {
   usersError.value = null
 
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Utenti mock')
+      usersData.value = [
+        {
+          ROWID: '999999',
+          nickname: 'devuser',
+          email: 'dev@calciodomains.local',
+          credits: 100,
+          isAdmin: true,
+          createdAt: new Date().toISOString()
+        },
+        {
+          ROWID: '999998',
+          nickname: 'testuser',
+          email: 'test@calciodomains.local',
+          credits: 50,
+          isAdmin: false,
+          createdAt: new Date().toISOString()
+        }
+      ]
+      usersLoading.value = false
+      return
+    }
+
     const users = await getAllUsersAdmin()
     usersData.value = users
     console.log('Loaded', users.length, 'users')
@@ -623,6 +651,33 @@ const loadDomains = async () => {
   domainsError.value = null
 
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Domini mock')
+      domainsData.value = [
+        {
+          ROWID: '1',
+          domainName: 'esempio.calcio',
+          category: 'premium',
+          level: 3,
+          buyerNickname: 'devuser',
+          buyerEmail: 'dev@calciodomains.local',
+          purchaseDate: new Date().toISOString()
+        },
+        {
+          ROWID: '2',
+          domainName: 'test.football',
+          category: 'standard',
+          level: 1,
+          buyerNickname: 'testuser',
+          buyerEmail: 'test@calciodomains.local',
+          purchaseDate: new Date().toISOString()
+        }
+      ]
+      domainsLoading.value = false
+      return
+    }
+
     const domains = await getAllDomainsAdmin()
     domainsData.value = domains
     console.log('Loaded', domains.length, 'domains')
@@ -657,6 +712,45 @@ const loadCoupons = async () => {
   couponsError.value = null
 
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Coupon mock con 3 esempi')
+      couponsData.value = [
+        {
+          ROWID: 'mock-coupon-1',
+          couponCode: 'SUMMER2024',
+          discountPercentage: 20,
+          status: 'available',
+          ownerNickname: 'devuser',
+          ownerEmail: 'dev@calciodomains.local',
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          ROWID: 'mock-coupon-2',
+          couponCode: 'WELCOME10',
+          discountPercentage: 10,
+          status: 'available',
+          ownerNickname: 'devuser',
+          ownerEmail: 'dev@calciodomains.local',
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          ROWID: 'mock-coupon-3',
+          couponCode: 'PROMO15',
+          discountPercentage: 15,
+          status: 'used',
+          ownerNickname: 'testuser',
+          ownerEmail: 'test@calciodomains.local',
+          createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ]
+      couponsLoading.value = false
+      return
+    }
+
     const coupons = await getAllCouponsAdmin()
     couponsData.value = coupons
     console.log('Loaded', coupons.length, 'coupons:', coupons)
@@ -691,6 +785,21 @@ const loadPricing = async () => {
   pricingError.value = null
 
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Prezzi mock')
+      const mockLevels = [
+        { rowId: '1', level: 1, coefficient: 1.0 },
+        { rowId: '2', level: 2, coefficient: 1.5 },
+        { rowId: '3', level: 3, coefficient: 2.0 }
+      ]
+      domainLevels.value = mockLevels
+      originalLevels.value = JSON.parse(JSON.stringify(mockLevels))
+      modifiedLevels.value.clear()
+      pricingLoading.value = false
+      return
+    }
+
     console.log('Loading pricing config...')
     const levels = await getPricingConfig()
     domainLevels.value = levels
@@ -752,6 +861,23 @@ const loadPrompts = async () => {
   promptsError.value = null
 
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Prompts mock')
+      const mockPrompts = [
+        {
+          rowId: '1',
+          category: 'system',
+          promptText: 'Mock system prompt for dev mode'
+        }
+      ]
+      promptsData.value = mockPrompts
+      originalPrompts.value = JSON.parse(JSON.stringify(mockPrompts))
+      modifiedPrompts.value.clear()
+      promptsLoading.value = false
+      return
+    }
+
     console.log('Loading prompts...')
     const prompts = await getPromptsAdmin()
     promptsData.value = prompts

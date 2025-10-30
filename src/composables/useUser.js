@@ -36,12 +36,11 @@ const isInitializing = ref(false)
  * - Garantisce consistenza tra frontend e database
  */
 export function useUser() {
-  // DEV MODE: Check for dev_mode query parameter (for Builder.io preview)
-  const urlParams = new URLSearchParams(window.location.search)
-  const isDevMode = urlParams.get('dev_mode') === 'true'
+  // MOCK AUTH MODE: Check environment variable for Builder.io preview
+  const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
 
-  if (isDevMode) {
-    console.log('🔧 DEV MODE ATTIVO: Utilizzo mock user per Builder.io preview')
+  if (isMockAuth) {
+    console.log('🔧 MOCK AUTH MODE: Utilizzo mock user per Builder.io preview')
 
     // Return mock admin user with all necessary data
     return {
@@ -70,17 +69,17 @@ export function useUser() {
       isInitializing: readonly(ref(false)),
 
       // Mock methods (no-op functions)
-      initialize: async () => { console.log('DEV MODE: initialize() chiamato ma ignorato') },
-      updateCredits: () => { console.log('DEV MODE: updateCredits() chiamato ma ignorato') },
-      updateAvatar: () => { console.log('DEV MODE: updateAvatar() chiamato ma ignorato') },
-      updateNickname: () => { console.log('DEV MODE: updateNickname() chiamato ma ignorato') },
-      addCoupon: () => { console.log('DEV MODE: addCoupon() chiamato ma ignorato') },
-      refreshCoupons: async () => { console.log('DEV MODE: refreshCoupons() chiamato ma ignorato') },
-      clearAll: () => { console.log('DEV MODE: clearAll() chiamato ma ignorato') },
-      forceReload: async () => { console.log('DEV MODE: forceReload() chiamato ma ignorato') },
-      toggleAdminMode: () => { console.log('DEV MODE: toggleAdminMode() chiamato ma ignorato') },
-      enableAdminMode: () => { console.log('DEV MODE: enableAdminMode() chiamato ma ignorato') },
-      disableAdminMode: () => { console.log('DEV MODE: disableAdminMode() chiamato ma ignorato') }
+      initialize: async () => { console.log('MOCK AUTH: initialize() chiamato ma ignorato') },
+      updateCredits: () => { console.log('MOCK AUTH: updateCredits() chiamato ma ignorato') },
+      updateAvatar: () => { console.log('MOCK AUTH: updateAvatar() chiamato ma ignorato') },
+      updateNickname: () => { console.log('MOCK AUTH: updateNickname() chiamato ma ignorato') },
+      addCoupon: () => { console.log('MOCK AUTH: addCoupon() chiamato ma ignorato') },
+      refreshCoupons: async () => { console.log('MOCK AUTH: refreshCoupons() chiamato ma ignorato') },
+      clearAll: () => { console.log('MOCK AUTH: clearAll() chiamato ma ignorato') },
+      forceReload: async () => { console.log('MOCK AUTH: forceReload() chiamato ma ignorato') },
+      toggleAdminMode: () => { console.log('MOCK AUTH: toggleAdminMode() chiamato ma ignorato') },
+      enableAdminMode: () => { console.log('MOCK AUTH: enableAdminMode() chiamato ma ignorato') },
+      disableAdminMode: () => { console.log('MOCK AUTH: disableAdminMode() chiamato ma ignorato') }
     }
   }
 

@@ -7,9 +7,8 @@ import CartModal from './components/CartModal.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import { useUser } from './composables/useUser'
 
-// DEV MODE: Check for dev_mode query parameter
-const urlParams = new URLSearchParams(window.location.search)
-const isDevMode = urlParams.get('dev_mode') === 'true'
+// MOCK AUTH MODE: Check environment variable
+const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
 
 // Auth0
 const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
@@ -18,8 +17,8 @@ const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
 const { initialize, isInitialized } = useUser()
 
 // Inizializza i dati utente quando l'utente fa login
-// SKIP se in dev mode (useUser già ritorna mock data)
-if (!isDevMode) {
+// SKIP se in mock auth mode (useUser già ritorna mock data)
+if (!isMockAuth) {
   watch([isAuthenticated, user], async ([authenticated, userData]) => {
     // Verifica che user.sub esista (Auth0 completamente caricato)
     if (authenticated && userData?.sub && !isInitialized.value) {

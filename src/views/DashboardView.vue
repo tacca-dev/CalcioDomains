@@ -239,6 +239,9 @@ import TransferCouponModal from '@/components/TransferCouponModal.vue'
 import { useToast } from '@/composables/useToast'
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
+// MOCK AUTH MODE: Check environment variable
+const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+
 // Toast notifications
 const { error: toastError } = useToast()
 
@@ -281,6 +284,15 @@ const onCouponTransferred = async () => {
 // Load user data from Catalyst
 const loadUserData = async () => {
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Caricamento dati mock dashboard')
+      userName.value = 'DEV USER'
+      userAvatar.value = null
+      userCredits.value = 100
+      return
+    }
+
     if (!user.value) return
 
     // 1. Get catalystRowId from Auth0
@@ -335,6 +347,30 @@ const loadUserData = async () => {
 // Load user coupons
 const loadUserCoupons = async () => {
   try {
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Coupon mock con 2 esempi')
+      userCoupons.value = [
+        {
+          ROWID: 'mock-coupon-1',
+          couponCode: 'SUMMER2024',
+          discountPercentage: 20,
+          status: 'available',
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          ROWID: 'mock-coupon-2',
+          couponCode: 'WELCOME10',
+          discountPercentage: 10,
+          status: 'available',
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ]
+      return
+    }
+
     if (!user.value) return
 
     // Get catalystRowId from Auth0
@@ -375,6 +411,53 @@ const loadUserCoupons = async () => {
 const loadUserOrders = async () => {
   try {
     ordersLoading.value = true
+
+    // MOCK AUTH MODE: Use mock data
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Ordini mock con 2 domini di esempio')
+      const mockOrders = [
+        {
+          id: 'mock-order-1',
+          totalAmount: 25,
+          createdAt: new Date().toISOString(),
+          domains: [
+            {
+              domain_name: 'esempio.calcio',
+              price: 15,
+              category: 'premium'
+            },
+            {
+              domain_name: 'test.football',
+              price: 10,
+              category: 'standard'
+            }
+          ]
+        }
+      ]
+
+      userOrders.value = mockOrders
+      totalDomainsOwned.value = 2
+      totalSpent.value = 25
+      myDomains.value = [
+        {
+          name: 'esempio.calcio',
+          price: 15,
+          category: 'premium',
+          purchaseDate: new Date().toISOString(),
+          orderId: 'mock-order-1'
+        },
+        {
+          name: 'test.football',
+          price: 10,
+          category: 'standard',
+          purchaseDate: new Date().toISOString(),
+          orderId: 'mock-order-1'
+        }
+      ]
+
+      ordersLoading.value = false
+      return
+    }
 
     if (!user.value) return
 

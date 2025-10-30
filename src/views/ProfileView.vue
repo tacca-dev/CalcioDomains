@@ -227,6 +227,9 @@ import { getUserData, updateUserProfile, getAvatarUrl, createStripeConnectAccoun
 
 const { user, getAccessTokenSilently } = useAuth0()
 
+// MOCK AUTH MODE: Check environment variable
+const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+
 // State
 const isLoading = ref(false)
 const isSaving = ref(false)
@@ -273,6 +276,26 @@ const loadUserMetadata = async () => {
   try {
     isLoading.value = true
     error.value = null
+
+    // MOCK AUTH MODE: Use mock data without Auth0 calls
+    if (isMockAuth) {
+      console.log('🔧 MOCK AUTH: Caricamento dati mock profilo')
+
+      // Mock data
+      formData.value = {
+        name: 'Dev User',
+        nickname: 'devuser',
+        avatar: null
+      }
+
+      // Mock Stripe data
+      stripeAccountId.value = null
+      stripeChargesEnabled.value = false
+      stripeDetailsSubmitted.value = false
+
+      isLoading.value = false
+      return
+    }
 
     // 1. Get catalystRowId from Auth0 (SOLO questo!)
     const token = await getAccessTokenSilently({
