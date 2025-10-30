@@ -70,13 +70,22 @@ import { useUser } from '@/composables/useUser'
 
 /** LOGIN AUTH0 - START */
 import { useAuth0 } from '@auth0/auth0-vue'
+import { ref, computed } from 'vue'
+
+// DEV MODE: Check for dev_mode query parameter
+const urlParams = new URLSearchParams(window.location.search)
+const isDevMode = urlParams.get('dev_mode') === 'true'
 
 // Get Auth0 functions and state
 const {
   loginWithRedirect,
-  isAuthenticated,
-  isLoading
+  isAuthenticated: auth0IsAuthenticated,
+  isLoading: auth0IsLoading
 } = useAuth0()
+
+// Override Auth0 state in dev mode
+const isAuthenticated = computed(() => isDevMode ? true : auth0IsAuthenticated.value)
+const isLoading = computed(() => isDevMode ? false : auth0IsLoading.value)
 
 // Get user state
 const { isAdmin, adminMode, isInitialized } = useUser()

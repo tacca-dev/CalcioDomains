@@ -36,6 +36,54 @@ const isInitializing = ref(false)
  * - Garantisce consistenza tra frontend e database
  */
 export function useUser() {
+  // DEV MODE: Check for dev_mode query parameter (for Builder.io preview)
+  const urlParams = new URLSearchParams(window.location.search)
+  const isDevMode = urlParams.get('dev_mode') === 'true'
+
+  if (isDevMode) {
+    console.log('🔧 DEV MODE ATTIVO: Utilizzo mock user per Builder.io preview')
+
+    // Return mock admin user with all necessary data
+    return {
+      // State IMMUTABILE
+      catalystRowId: readonly(ref('999999')),
+      email: readonly(ref('dev@calciodomains.local')),
+      name: readonly(ref('Dev User')),
+      nickname: readonly(ref('devuser')),
+      stripeCustomerId: readonly(ref('cus_mock_stripe_id')),
+      isAdmin: readonly(ref(true)),
+
+      // State MUTABILE
+      credits: ref(100),
+      avatar: ref(null),
+
+      // Coupon state
+      availableCoupons: readonly(ref([])),
+      availableCouponsCount: computed(() => 0),
+      firstRechargeBonusAvailable: readonly(ref(false)),
+
+      // Admin state
+      adminMode: readonly(ref(true)),
+
+      // Flags
+      isInitialized: readonly(ref(true)),
+      isInitializing: readonly(ref(false)),
+
+      // Mock methods (no-op functions)
+      initialize: async () => { console.log('DEV MODE: initialize() chiamato ma ignorato') },
+      updateCredits: () => { console.log('DEV MODE: updateCredits() chiamato ma ignorato') },
+      updateAvatar: () => { console.log('DEV MODE: updateAvatar() chiamato ma ignorato') },
+      updateNickname: () => { console.log('DEV MODE: updateNickname() chiamato ma ignorato') },
+      addCoupon: () => { console.log('DEV MODE: addCoupon() chiamato ma ignorato') },
+      refreshCoupons: async () => { console.log('DEV MODE: refreshCoupons() chiamato ma ignorato') },
+      clearAll: () => { console.log('DEV MODE: clearAll() chiamato ma ignorato') },
+      forceReload: async () => { console.log('DEV MODE: forceReload() chiamato ma ignorato') },
+      toggleAdminMode: () => { console.log('DEV MODE: toggleAdminMode() chiamato ma ignorato') },
+      enableAdminMode: () => { console.log('DEV MODE: enableAdminMode() chiamato ma ignorato') },
+      disableAdminMode: () => { console.log('DEV MODE: disableAdminMode() chiamato ma ignorato') }
+    }
+  }
+
   /**
    * Computed: numero di coupon disponibili (status = 'available')
    */

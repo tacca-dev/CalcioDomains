@@ -7,6 +7,10 @@ import CartModal from './components/CartModal.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import { useUser } from './composables/useUser'
 
+// DEV MODE: Check for dev_mode query parameter
+const urlParams = new URLSearchParams(window.location.search)
+const isDevMode = urlParams.get('dev_mode') === 'true'
+
 // Auth0
 const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
 
@@ -14,18 +18,21 @@ const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
 const { initialize, isInitialized } = useUser()
 
 // Inizializza i dati utente quando l'utente fa login
-watch([isAuthenticated, user], async ([authenticated, userData]) => {
-  // Verifica che user.sub esista (Auth0 completamente caricato)
-  if (authenticated && userData?.sub && !isInitialized.value) {
-    try {
-      console.log('🚀 Inizializzazione dati utente globali...')
-      await initialize(userData, getAccessTokenSilently)
-      console.log('✅ Dati utente inizializzati con successo')
-    } catch (error) {
-      console.error('❌ Errore inizializzando dati utente:', error)
+// SKIP se in dev mode (useUser già ritorna mock data)
+if (!isDevMode) {
+  watch([isAuthenticated, user], async ([authenticated, userData]) => {
+    // Verifica che user.sub esista (Auth0 completamente caricato)
+    if (authenticated && userData?.sub && !isInitialized.value) {
+      try {
+        console.log('🚀 Inizializzazione dati utente globali...')
+        await initialize(userData, getAccessTokenSilently)
+        console.log('✅ Dati utente inizializzati con successo')
+      } catch (error) {
+        console.error('❌ Errore inizializzando dati utente:', error)
+      }
     }
-  }
-}, { immediate: true })
+  }, { immediate: true })
+}
 </script>
 
 <template>
