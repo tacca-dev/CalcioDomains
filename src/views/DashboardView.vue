@@ -240,7 +240,7 @@ import { useToast } from '@/composables/useToast'
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
 // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
-const isMockAuth = true
+const isMockAuth = false
 
 // Toast notifications
 const { error: toastError } = useToast()

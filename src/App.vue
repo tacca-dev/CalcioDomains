@@ -8,7 +8,7 @@ import ToastContainer from './components/ToastContainer.vue'
 import { useUser } from './composables/useUser'
 
 // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
-const isMockAuth = true
+const isMockAuth = false
 
 // Auth0
 const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()

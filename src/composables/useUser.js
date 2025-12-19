@@ -38,7 +38,7 @@ const isInitializing = ref(false)
 export function useUser() {
   // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
   // const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
-  const isMockAuth = true
+  const isMockAuth = false
 
   if (isMockAuth) {
     console.log('🔧 MOCK AUTH MODE: Utilizzo mock user per Builder.io preview')

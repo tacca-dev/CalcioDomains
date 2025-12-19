@@ -487,7 +487,7 @@ const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
 const { showToast } = useToast()
 
 // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
-const isMockAuth = true
+const isMockAuth = false
 
 const activeTab = ref('stats')
 

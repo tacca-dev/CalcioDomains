@@ -228,7 +228,7 @@ import { getUserData, updateUserProfile, getAvatarUrl, createStripeConnectAccoun
 const { user, getAccessTokenSilently } = useAuth0()
 
 // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
-const isMockAuth = true
+const isMockAuth = false
 
 // State
 const isLoading = ref(false)
