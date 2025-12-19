@@ -12,6 +12,9 @@
           <router-link to="/domains" class="nav-link" active-class="active">
             Domini
           </router-link>
+          <router-link to="/perche-calcio" class="nav-link" active-class="active">
+            Perché .calcio
+          </router-link>
         </div>
       </div>
       <div class="navbar-right">
