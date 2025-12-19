@@ -4,7 +4,7 @@
       <div class="container">
         <h1 class="title">Perché un dominio <span class="highlight">.calcio</span>?</h1>
         <p class="subtitle">
-          Scopri come la tecnologia blockchain sta rivoluzionando l'identità digitale nel mondo del calcio.
+          Scopri come la tecnologia blockchain sta rivoluzionando l'identità digitale nel mondo del calcio!
         </p>
       </div>
     </header>
@@ -104,16 +104,20 @@
 .title {
   font-size: 3rem;
   font-weight: 700;
+  line-height: 1.6;
   margin-bottom: 1rem;
 }
 
 .highlight {
+  display: inline;
   color: #4b5563;
+  font-weight: 400;
 }
 
 .subtitle {
   font-size: 1.25rem;
   color: #6b7280;
+  font-weight: 400;
   max-width: 700px;
   margin: 0 auto;
 }
