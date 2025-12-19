@@ -239,8 +239,8 @@ import TransferCouponModal from '@/components/TransferCouponModal.vue'
 import { useToast } from '@/composables/useToast'
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
-// MOCK AUTH MODE: Check environment variable
-const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+// MOCK AUTH MODE: Hardcoded to true for Builder.io preview
+const isMockAuth = true
 
 // Toast notifications
 const { error: toastError } = useToast()
