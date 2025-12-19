@@ -486,8 +486,8 @@ const router = useRouter()
 const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
 const { showToast } = useToast()
 
-// MOCK AUTH MODE: Check environment variable
-const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+// MOCK AUTH MODE: Hardcoded to true for Builder.io preview
+const isMockAuth = true
 
 const activeTab = ref('stats')
 

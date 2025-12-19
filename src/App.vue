@@ -7,8 +7,8 @@ import CartModal from './components/CartModal.vue'
 import ToastContainer from './components/ToastContainer.vue'
 import { useUser } from './composables/useUser'
 
-// MOCK AUTH MODE: Check environment variable
-const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+// MOCK AUTH MODE: Hardcoded to true for Builder.io preview
+const isMockAuth = true
 
 // Auth0
 const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()

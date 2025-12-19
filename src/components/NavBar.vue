@@ -72,8 +72,8 @@ import { useUser } from '@/composables/useUser'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { computed } from 'vue'
 
-// MOCK AUTH MODE: Check environment variable
-const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+// MOCK AUTH MODE: Hardcoded to true for Builder.io preview
+const isMockAuth = true
 
 // Get Auth0 functions and state
 const {

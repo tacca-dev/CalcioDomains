@@ -36,8 +36,9 @@ const isInitializing = ref(false)
  * - Garantisce consistenza tra frontend e database
  */
 export function useUser() {
-  // MOCK AUTH MODE: Check environment variable for Builder.io preview
-  const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+  // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
+  // const isMockAuth = import.meta.env.VITE_MOCK_AUTH === 'true'
+  const isMockAuth = true
 
   if (isMockAuth) {
     console.log('🔧 MOCK AUTH MODE: Utilizzo mock user per Builder.io preview')
