@@ -2,15 +2,12 @@
   <nav class="navbar">
     <div class="navbar-container">
       <div class="navbar-left">
-        <router-link to="/" class="nav-brand">
-          CalcioDomains
-        </router-link>
+        <router-link to="/" class="nav-brand"> CalcioDomains </router-link>
         <div class="nav-links">
-          <router-link to="/" class="nav-link" active-class="active">
-            Home
-          </router-link>
-          <router-link to="/domains" class="nav-link" active-class="active">
-            Domini
+          <router-link to="/" class="nav-link" active-class="active"> Home </router-link>
+          <router-link to="/domains" class="nav-link" active-class="active"> Domini </router-link>
+          <router-link to="/perche-calcio" class="nav-link" active-class="active">
+            Perché .calcio
           </router-link>
         </div>
       </div>
@@ -19,40 +16,21 @@
         <CartIcon v-if="!isLoading" />
 
         <!-- Show loading state -->
-        <div v-if="isLoading" class="loading-text">
-          Caricamento...
-        </div>
+        <div v-if="isLoading" class="loading-text">Caricamento...</div>
 
         <!-- Show login button when not authenticated -->
-        <button
-          v-else-if="!isAuthenticated"
-          @click="login"
-          class="login-button"
-        >
-          Login
-        </button>
+        <button v-else-if="!isAuthenticated" @click="login" class="login-button">Login</button>
 
         <!-- Show dashboard buttons when authenticated -->
         <template v-else>
           <!-- Admin mode badge -->
-          <div v-if="adminMode" class="admin-badge">
-            ADMIN MODE
-          </div>
+          <div v-if="adminMode" class="admin-badge">ADMIN MODE</div>
 
           <!-- Dashboard button -->
-          <button
-            @click="$router.push('/dashboard')"
-            class="dashboard-button"
-          >
-            Dashboard
-          </button>
+          <button @click="$router.push('/dashboard')" class="dashboard-button">Dashboard</button>
 
           <!-- Admin Panel button (only for admins) -->
-          <button
-            v-if="isAdmin"
-            @click="$router.push('/admin')"
-            class="admin-button"
-          >
+          <button v-if="isAdmin" @click="$router.push('/admin')" class="admin-button">
             Admin Panel
           </button>
         </template>
@@ -83,8 +61,8 @@ const {
 } = useAuth0()
 
 // Override Auth0 state in mock auth mode
-const isAuthenticated = computed(() => isMockAuth ? true : auth0IsAuthenticated.value)
-const isLoading = computed(() => isMockAuth ? false : auth0IsLoading.value)
+const isAuthenticated = computed(() => (isMockAuth ? true : auth0IsAuthenticated.value))
+const isLoading = computed(() => (isMockAuth ? false : auth0IsLoading.value))
 
 // Get user state
 const { isAdmin, adminMode, isInitialized } = useUser()
@@ -98,7 +76,7 @@ console.log('NavBar - adminMode:', adminMode.value)
 const login = () => {
   loginWithRedirect({
     redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/'
-  });
+  })
 }
 /** LOGIN AUTH0 - END */
 
