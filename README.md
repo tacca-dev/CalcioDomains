@@ -13,7 +13,6 @@ CalcioDomains is a full-stack web application that allows users to search, evalu
 - **Credit System** - Internal wallet for quick purchases
 - **Coupon Management** - Create, use, and transfer coupons between users
 - **Admin Panel** - Complete management of users, domains, and configurations
-- ciao
 
 ## Architecture
 
