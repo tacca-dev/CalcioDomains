@@ -4,7 +4,8 @@
       <div class="container">
         <h1 class="title">Perché un dominio <span class="highlight">.calcio</span>?</h1>
         <p class="subtitle">
-          Scopri come la tecnologia blockchain sta rivoluzionando l'identità digitale nel mondo del calcio!
+          Scopri come la tecnologia blockchain sta rivoluzionando l'identità digitale nel mondo del
+          calcio!
         </p>
       </div>
     </header>
@@ -16,28 +17,32 @@
             <div class="icon-wrapper">🛡️</div>
             <h3>Proprietà Vera</h3>
             <p>
-              A differenza dei domini tradizionali (.com, .it), un dominio blockchain è un NFT (Non-Fungible Token) di tua proprietà esclusiva. Nessuno può revocarlo o censurarlo.
+              A differenza dei domini tradizionali (.com, .it), un dominio blockchain è un NFT
+              (Non-Fungible Token) di tua proprietà esclusiva. Nessuno può revocarlo o censurarlo.
             </p>
           </div>
           <div class="card">
             <div class="icon-wrapper">♾️</div>
             <h3>Senza Rinnovi</h3>
             <p>
-              Acquisti il tuo dominio una volta e resta tuo per sempre. Non ci sono canoni annuali di rinnovo o scadenze da ricordare.
+              Acquisti il tuo dominio una volta e resta tuo per sempre. Non ci sono canoni annuali
+              di rinnovo o scadenze da ricordare.
             </p>
           </div>
           <div class="card">
             <div class="icon-wrapper">⚽</div>
             <h3>Identità per Tifosi</h3>
             <p>
-              Mostra la tua passione. Un dominio .calcio è il modo perfetto per identificarti nel Web3 come vero appassionato o professionista del settore.
+              Mostra la tua passione. Un dominio .calcio è il modo perfetto per identificarti nel
+              Web3 come vero appassionato o professionista del settore.
             </p>
           </div>
           <div class="card">
             <div class="icon-wrapper">💳</div>
             <h3>Semplifica i Pagamenti</h3>
             <p>
-              Usa il tuo nome (es. mario.calcio) al posto di lunghi e complessi indirizzi wallet per ricevere criptovalute dai tuoi amici o fan.
+              Usa il tuo nome (es. mario.calcio) al posto di lunghi e complessi indirizzi wallet per
+              ricevere criptovalute dai tuoi amici o fan.
             </p>
           </div>
         </div>
@@ -50,19 +55,28 @@
         <div class="use-case-item">
           <div class="use-case-content">
             <h4>Personal Branding</h4>
-            <p>Sei un calciatore, un giornalista o un content creator? Un dominio .calcio consolida il tuo brand nel futuro di internet.</p>
+            <p>
+              Sei un calciatore, un giornalista o un content creator? Un dominio .calcio consolida
+              il tuo brand nel futuro di internet.
+            </p>
           </div>
         </div>
         <div class="use-case-item">
           <div class="use-case-content">
             <h4>Fan Club & Community</h4>
-            <p>Crea un'identità digitale univoca per il tuo club o gruppo di tifosi, aprendo le porte a esperienze esclusive nel metaverso.</p>
+            <p>
+              Crea un'identità digitale univoca per il tuo club o gruppo di tifosi, aprendo le porte
+              a esperienze esclusive nel metaverso.
+            </p>
           </div>
         </div>
         <div class="use-case-item">
           <div class="use-case-content">
             <h4>Ecosystem Interoperability</h4>
-            <p>Utilizza il tuo dominio .calcio attraverso diverse applicazioni decentralizzate (DApps), giochi blockchain e piattaforme social Web3.</p>
+            <p>
+              Utilizza il tuo dominio .calcio attraverso diverse applicazioni decentralizzate
+              (DApps), giochi blockchain e piattaforme social Web3.
+            </p>
           </div>
         </div>
       </div>
@@ -137,7 +151,9 @@
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .card:hover {
@@ -227,12 +243,14 @@
   .title {
     font-size: 2.25rem;
   }
-  
+
   .hero-section {
     padding: 3rem 0;
   }
-  
-  .content-section, .use-cases-section, .cta-section {
+
+  .content-section,
+  .use-cases-section,
+  .cta-section {
     padding: 3rem 0;
   }
 }
