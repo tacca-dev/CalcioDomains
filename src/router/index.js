@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import DomainsView from '../views/DomainsView.vue'
+import WhyCalcioView from '../views/WhyCalcioView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import AdminDashboardView from '../views/AdminDashboardView.vue'
 import ProfileView from '../views/ProfileView.vue'
@@ -23,6 +24,11 @@ const router = createRouter({
       path: '/domains',
       name: 'domains',
       component: DomainsView
+    },
+    {
+      path: '/perche-calcio',
+      name: 'perche-calcio',
+      component: WhyCalcioView
     },
     {
       path: '/dashboard',
