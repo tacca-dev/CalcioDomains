@@ -555,7 +555,7 @@ const formatDate = (dateString) => {
 const handleLogout = () => {
   logout({
     logoutParams: {
-      returnTo: 'https://calciodomains-yqdhfgao.onslate.eu'
+      returnTo: window.location.origin
     }
   })
 }

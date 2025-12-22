@@ -75,7 +75,7 @@ console.log('NavBar - adminMode:', adminMode.value)
 // Login function
 const login = () => {
   loginWithRedirect({
-    redirect_uri: 'https://calciodomains-yqdhfgao.onslate.eu/'
+    redirect_uri: window.location.origin + '/'
   })
 }
 /** LOGIN AUTH0 - END */

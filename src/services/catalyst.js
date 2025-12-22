@@ -297,7 +297,8 @@ export async function createCheckout(userId, cartItems, selectedCouponId = null,
         userId,
         cartItems,
         selectedCouponId,
-        convertRestToCredit
+        convertRestToCredit,
+        originUrl: window.location.origin
       })
     })
 
@@ -466,7 +467,8 @@ export async function createRechargeCheckout(userId, amount, couponCode = null) 
       body: JSON.stringify({
         userId,
         amount,
-        couponCode
+        couponCode,
+        originUrl: window.location.origin
       })
     })
 
