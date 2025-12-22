@@ -75,7 +75,7 @@ console.log('NavBar - adminMode:', adminMode.value)
 // Login function
 const login = () => {
   loginWithRedirect({
-    redirect_uri: window.location.origin + '/'
+    redirect_uri: 'https://app.calcio.domains/'
   })
 }
 /** LOGIN AUTH0 - END */
