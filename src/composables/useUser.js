@@ -101,13 +101,13 @@ export function useUser() {
 
       const token = await getAccessTokenSilently({
         authorizationParams: {
-          audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+          audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
           scope: 'read:current_user'
         }
       })
 
       const response = await fetch(
-        `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.sub}`,
+        `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.sub}`,
         {
           headers: {
             Authorization: `Bearer ${token}`

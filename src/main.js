@@ -13,11 +13,11 @@ const app = createApp(App)
 // Configure Auth0 with Management API access
 app.use(
   createAuth0({
-    domain: "dev-giylww0unln6dunq.eu.auth0.com",
-    clientId: "NIy1nFN8CeX42nrWAvB6jk2KNhNO77gG",
+    domain: "logintest-calcio-domains.eu.auth0.com",
+    clientId: "ZPcqBmlnc2CUaXJLQCfvNUkTEtMAZLCh",
     authorizationParams: {
-      redirect_uri: 'https://app.calcio.domains/',
-      audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+      redirect_uri: window.location.origin + '/',
+      audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
       scope: 'openid profile email read:current_user update:current_user_metadata create:current_user_metadata'
     }
   })

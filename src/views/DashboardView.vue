@@ -298,13 +298,13 @@ const loadUserData = async () => {
     // 1. Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -380,13 +380,13 @@ const loadUserCoupons = async () => {
     // Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -468,13 +468,13 @@ const loadUserOrders = async () => {
     // Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -574,13 +574,13 @@ const handleRecharge = async (rechargeData) => {
     // Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`

@@ -300,13 +300,13 @@ const loadUserMetadata = async () => {
     // 1. Get catalystRowId from Auth0 (SOLO questo!)
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -411,13 +411,13 @@ const handleSaveProfile = async () => {
     // 1. Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -495,13 +495,13 @@ const resetForm = () => {
 const getCatalystRowId = async () => {
   const token = await getAccessTokenSilently({
     authorizationParams: {
-      audience: 'https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/',
+      audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
       scope: 'read:current_user'
     }
   })
 
   const auth0Response = await axios.get(
-    `https://dev-giylww0unln6dunq.eu.auth0.com/api/v2/users/${user.value.sub}`,
+    `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
     {
       headers: {
         Authorization: `Bearer ${token}`
