@@ -72,6 +72,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { createOrder, deleteFromCart, getUserCart, processRecharge } from '@/services/catalyst'
 import { useCart } from '@/composables/useCart'
 import { useUser } from '@/composables/useUser'
+import { ENV } from '@/config/environment'
 
 const route = useRoute()
 const { user, getAccessTokenSilently } = useAuth0()
@@ -90,13 +91,13 @@ async function getCatalystRowId() {
   try {
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const response = await fetch(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`

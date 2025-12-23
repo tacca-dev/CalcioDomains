@@ -1,5 +1,7 @@
+import { ENV } from '@/config/environment'
+
 // Catalyst Backend URL
-const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
+const CATALYST_BASE_URL = ENV.CATALYST_BASE_URL
 
 // Token storage
 let accessToken = null

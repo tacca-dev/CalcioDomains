@@ -1,5 +1,6 @@
 import { ref, readonly, computed } from 'vue'
 import { getUserData, getUserCoupons } from '@/services/catalyst'
+import { ENV } from '@/config/environment'
 
 // ============================================
 // STATE GLOBALE (condiviso tra tutti i componenti)
@@ -101,13 +102,13 @@ export function useUser() {
 
       const token = await getAccessTokenSilently({
         authorizationParams: {
-          audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+          audience: ENV.AUTH0_AUDIENCE,
           scope: 'read:current_user'
         }
       })
 
       const response = await fetch(
-        `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.sub}`,
+        `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.sub}`,
         {
           headers: {
             Authorization: `Bearer ${token}`

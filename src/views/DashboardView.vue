@@ -237,6 +237,7 @@ import { getUserData, getAvatarUrl, getUserOrders, createRechargeCheckout, getUs
 import RechargeModal from '@/components/RechargeModal.vue'
 import TransferCouponModal from '@/components/TransferCouponModal.vue'
 import { useToast } from '@/composables/useToast'
+import { ENV } from '@/config/environment'
 const { user, getAccessTokenSilently, logout } = useAuth0()
 
 // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
@@ -298,13 +299,13 @@ const loadUserData = async () => {
     // 1. Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -380,13 +381,13 @@ const loadUserCoupons = async () => {
     // Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -468,13 +469,13 @@ const loadUserOrders = async () => {
     // Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -574,13 +575,13 @@ const handleRecharge = async (rechargeData) => {
     // Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`

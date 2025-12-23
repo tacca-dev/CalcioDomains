@@ -224,6 +224,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import axios from 'axios'
 import { getUserData, updateUserProfile, getAvatarUrl, createStripeConnectAccount, createStripeAccountLink, getStripeAccountStatus, createStripeDashboardLink } from '@/services/catalyst'
+import { ENV } from '@/config/environment'
 
 const { user, getAccessTokenSilently } = useAuth0()
 
@@ -300,13 +301,13 @@ const loadUserMetadata = async () => {
     // 1. Get catalystRowId from Auth0 (SOLO questo!)
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -411,13 +412,13 @@ const handleSaveProfile = async () => {
     // 1. Get catalystRowId from Auth0
     const token = await getAccessTokenSilently({
       authorizationParams: {
-        audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+        audience: ENV.AUTH0_AUDIENCE,
         scope: 'read:current_user'
       }
     })
 
     const auth0Response = await axios.get(
-      `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+      `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -457,7 +458,7 @@ const handleSaveProfile = async () => {
 
     // Refresh avatar preview se caricato
     if (result.data && result.data.avatar_url) {
-      currentAvatarUrl.value = `https://calciodomains-20105566495.development.catalystserverless.eu${result.data.avatar_url}&t=${Date.now()}`
+      currentAvatarUrl.value = `${ENV.CATALYST_BASE_URL.replace('/server', '')}${result.data.avatar_url}&t=${Date.now()}`
       avatarPreview.value = null
       formData.value.avatar = null
       if (fileInput.value) {
@@ -495,13 +496,13 @@ const resetForm = () => {
 const getCatalystRowId = async () => {
   const token = await getAccessTokenSilently({
     authorizationParams: {
-      audience: 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+      audience: ENV.AUTH0_AUDIENCE,
       scope: 'read:current_user'
     }
   })
 
   const auth0Response = await axios.get(
-    `https://logintest-calcio-domains.eu.auth0.com/api/v2/users/${user.value.sub}`,
+    `https://${ENV.AUTH0_DOMAIN}/api/v2/users/${user.value.sub}`,
     {
       headers: {
         Authorization: `Bearer ${token}`

@@ -1,4 +1,6 @@
-const CATALYST_BASE_URL = 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
+import { ENV } from '@/config/environment'
+
+const CATALYST_BASE_URL = ENV.CATALYST_BASE_URL
 
 /**
  * Call getPrompt Catalyst Function
