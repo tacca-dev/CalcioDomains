@@ -24,7 +24,7 @@
         <!-- Show dashboard buttons when authenticated -->
         <template v-else>
           <!-- Admin mode badge -->
-          <div v-if="adminMode" class="admin-badge">ADMIN MODE</div>
+          <div v-if="isAdmin && adminMode" class="admin-badge">ADMIN MODE</div>
 
           <!-- Dashboard button -->
           <button @click="$router.push('/dashboard')" class="dashboard-button">Dashboard</button>
