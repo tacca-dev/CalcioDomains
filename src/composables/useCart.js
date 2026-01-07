@@ -134,10 +134,12 @@ export function useCart(options = {}) {
     } catch (error) {
       console.error('❌ Errore aggiungendo al carrello:', error)
 
-      // Mostra errore specifico se dominio già nel carrello
+      // Mostra errore specifico basato sul messaggio
       if (error.message && error.message.includes('already in cart')) {
         toastError('Questo dominio è già nel carrello', 3000)
-      } else if (error.message && error.message.includes('riservato')) {
+      } else if (error.message && error.message.includes('già presente nel tuo carrello')) {
+        toastError('Questo dominio è già nel tuo carrello', 3000)
+      } else if (error.message && error.message.includes('riservato da un altro')) {
         toastError('Dominio temporaneamente riservato da un altro utente', 4000)
       } else {
         toastError('Errore aggiungendo al carrello. Riprova.', 3000)
