@@ -482,37 +482,58 @@
       <!-- Stripe -->
       <div v-if="activeTab === 'stripe'" class="content-section">
         <h2>Configurazione Stripe</h2>
+        <p class="section-description">Gestisci la modalità di pagamento del sistema.</p>
 
         <div v-if="stripeLoading" class="state-message">Caricamento...</div>
         <div v-else-if="stripeError" class="state-message error">{{ stripeError }}</div>
 
-        <div v-else>
-          <!-- Modalità corrente -->
-          <div class="stripe-mode-box" :class="stripeSettings.mode">
-            <span class="mode-badge">{{ stripeSettings.mode === 'live' ? 'LIVE' : 'TEST' }}</span>
-            <span class="mode-text">{{ stripeSettings.mode === 'live' ? 'Pagamenti reali attivi' : 'Modalità test attiva' }}</span>
+        <div v-else class="stripe-container">
+          <!-- Status Card -->
+          <div class="stripe-status-card" :class="stripeSettings.mode">
+            <div class="stripe-status-icon">
+              <svg v-if="stripeSettings.mode === 'test'" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="stripe-status-content">
+              <span class="stripe-status-badge">{{ stripeSettings.mode === 'live' ? 'LIVE' : 'TEST' }}</span>
+              <span class="stripe-status-text">{{ stripeSettings.mode === 'live' ? 'Pagamenti reali attivi' : 'Ambiente di test attivo' }}</span>
+            </div>
           </div>
 
-          <!-- Switch -->
-          <div class="stripe-switch">
-            <button
-              class="switch-btn"
-              :class="{ active: stripeSettings.mode === 'test' }"
-              :disabled="stripeSettings.mode === 'test' || stripeSaving"
-              @click="switchStripeMode('test')"
-            >TEST</button>
-            <button
-              class="switch-btn live"
-              :class="{ active: stripeSettings.mode === 'live' }"
-              :disabled="stripeSettings.mode === 'live' || stripeSaving"
-              @click="confirmLiveMode"
-            >LIVE</button>
+          <!-- Mode Switch -->
+          <div class="stripe-mode-switch">
+            <span class="switch-label">Cambia modalità:</span>
+            <div class="switch-buttons">
+              <button
+                class="mode-btn test"
+                :class="{ active: stripeSettings.mode === 'test' }"
+                :disabled="stripeSettings.mode === 'test' || stripeSaving"
+                @click="switchStripeMode('test')"
+              >
+                <span class="mode-btn-icon">🔧</span>
+                <span class="mode-btn-text">Test</span>
+              </button>
+              <button
+                class="mode-btn live"
+                :class="{ active: stripeSettings.mode === 'live' }"
+                :disabled="stripeSettings.mode === 'live' || stripeSaving"
+                @click="confirmLiveMode"
+              >
+                <span class="mode-btn-icon">⚡</span>
+                <span class="mode-btn-text">Live</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Info -->
-          <p v-if="stripeSettings.lastUpdatedBy" class="stripe-info">
-            Ultimo update: {{ stripeSettings.lastUpdatedBy }}
-          </p>
+          <!-- Info Note -->
+          <div class="stripe-note">
+            <strong>Nota:</strong> Il passaggio a modalità Live richiede conferma. Le transazioni Live addebiteranno carte reali.
+          </div>
         </div>
       </div>
     </div>
@@ -1618,95 +1639,157 @@ const goToUserDashboard = () => {
 }
 
 /* Stripe management */
-.stripe-mode-box {
+.stripe-container {
+  max-width: 500px;
+}
+
+.stripe-status-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  transition: all 0.2s ease;
 }
 
-.stripe-mode-box.test {
-  background: #ecfdf5;
-  border: 2px solid #10b981;
+.stripe-status-card.test {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
 }
 
-.stripe-mode-box.live {
-  background: #fef2f2;
-  border: 2px solid #ef4444;
+.stripe-status-card.live {
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  border: 1px solid #fca5a5;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
 }
 
-.mode-badge {
-  font-size: 1.25rem;
-  font-weight: 700;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
+.stripe-status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 
-.stripe-mode-box.test .mode-badge {
+.stripe-status-card.test .stripe-status-icon {
   background: #10b981;
   color: white;
 }
 
-.stripe-mode-box.live .mode-badge {
+.stripe-status-card.live .stripe-status-icon {
   background: #ef4444;
   color: white;
 }
 
-.mode-text {
-  font-size: 1rem;
-  color: #374151;
-}
-
-.stripe-switch {
+.stripe-status-content {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.switch-btn {
-  padding: 0.75rem 2rem;
-  font-size: 1rem;
+.stripe-status-badge {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.stripe-status-card.test .stripe-status-badge {
+  color: #059669;
+}
+
+.stripe-status-card.live .stripe-status-badge {
+  color: #dc2626;
+}
+
+.stripe-status-text {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.stripe-mode-switch {
+  margin-bottom: 2rem;
+}
+
+.switch-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.switch-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.95rem;
   font-weight: 600;
   border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 10px;
   background: white;
   color: #6b7280;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
 }
 
-.switch-btn:hover:not(:disabled) {
+.mode-btn-icon {
+  font-size: 1.1rem;
+}
+
+.mode-btn-text {
+  font-weight: 600;
+}
+
+.mode-btn.test:hover:not(:disabled) {
   border-color: #10b981;
   color: #10b981;
+  background: #f0fdf4;
 }
 
-.switch-btn.active {
+.mode-btn.test.active {
   background: #10b981;
   border-color: #10b981;
   color: white;
 }
 
-.switch-btn.live:hover:not(:disabled) {
+.mode-btn.live:hover:not(:disabled) {
   border-color: #ef4444;
   color: #ef4444;
+  background: #fef2f2;
 }
 
-.switch-btn.live.active {
+.mode-btn.live.active {
   background: #ef4444;
   border-color: #ef4444;
   color: white;
 }
 
-.switch-btn:disabled {
-  opacity: 0.5;
+.mode-btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.stripe-info {
-  color: #6b7280;
+.stripe-note {
+  padding: 1rem 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 0.875rem;
-  margin: 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.stripe-note strong {
+  color: #374151;
 }
 </style>
