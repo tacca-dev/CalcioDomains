@@ -57,6 +57,13 @@
       >
         Prompt
       </button>
+      <button
+        class="tab-button"
+        :class="{ active: activeTab === 'stripe' }"
+        @click="activeTab = 'stripe'; loadStripeSettings()"
+      >
+        Stripe
+      </button>
     </div>
 
     <!-- Tab Content -->
@@ -471,6 +478,43 @@
           </div>
         </div>
       </div>
+
+      <!-- Stripe -->
+      <div v-if="activeTab === 'stripe'" class="content-section">
+        <h2>Configurazione Stripe</h2>
+
+        <div v-if="stripeLoading" class="state-message">Caricamento...</div>
+        <div v-else-if="stripeError" class="state-message error">{{ stripeError }}</div>
+
+        <div v-else>
+          <!-- Modalità corrente -->
+          <div class="stripe-mode-box" :class="stripeSettings.mode">
+            <span class="mode-badge">{{ stripeSettings.mode === 'live' ? 'LIVE' : 'TEST' }}</span>
+            <span class="mode-text">{{ stripeSettings.mode === 'live' ? 'Pagamenti reali attivi' : 'Modalità test attiva' }}</span>
+          </div>
+
+          <!-- Switch -->
+          <div class="stripe-switch">
+            <button
+              class="switch-btn"
+              :class="{ active: stripeSettings.mode === 'test' }"
+              :disabled="stripeSettings.mode === 'test' || stripeSaving"
+              @click="switchStripeMode('test')"
+            >TEST</button>
+            <button
+              class="switch-btn live"
+              :class="{ active: stripeSettings.mode === 'live' }"
+              :disabled="stripeSettings.mode === 'live' || stripeSaving"
+              @click="confirmLiveMode"
+            >LIVE</button>
+          </div>
+
+          <!-- Info -->
+          <p v-if="stripeSettings.lastUpdatedBy" class="stripe-info">
+            Ultimo update: {{ stripeSettings.lastUpdatedBy }}
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -480,10 +524,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@/composables/useUser'
 import { useToast } from '@/composables/useToast'
-import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin, getPricingConfig, updateDomainLevel, getPromptsAdmin, updatePrompt } from '@/services/catalyst'
+import { getAllUsersAdmin, getAllDomainsAdmin, getAllCouponsAdmin, getPricingConfig, updateDomainLevel, getPromptsAdmin, updatePrompt, getStripeSettingsAdmin, updateStripeMode } from '@/services/catalyst'
 
 const router = useRouter()
-const { isAdmin, isInitialized, enableAdminMode, disableAdminMode } = useUser()
+const { isAdmin, isInitialized, enableAdminMode, disableAdminMode, catalystRowId } = useUser()
 const { showToast } = useToast()
 
 // MOCK AUTH MODE: Hardcoded to true for Builder.io preview
@@ -524,6 +568,12 @@ const promptsLoading = ref(false)
 const promptsError = ref(null)
 const modifiedPrompts = ref(new Set())
 const savingPrompts = ref(false)
+
+// Stripe management state
+const stripeSettings = ref({ mode: 'test' })
+const stripeLoading = ref(false)
+const stripeError = ref(null)
+const stripeSaving = ref(false)
 
 // Load users data
 const loadUsers = async () => {
@@ -937,6 +987,65 @@ const savePromptChanges = async () => {
 const resetPromptChanges = () => {
   promptsData.value = JSON.parse(JSON.stringify(originalPrompts.value))
   modifiedPrompts.value.clear()
+}
+
+// Load Stripe settings
+const loadStripeSettings = async () => {
+  stripeLoading.value = true
+  stripeError.value = null
+
+  try {
+    console.log('Loading Stripe settings...')
+    const settings = await getStripeSettingsAdmin(catalystRowId.value)
+    stripeSettings.value = settings
+    console.log('Stripe settings loaded:', settings.mode)
+  } catch (error) {
+    console.error('Error loading Stripe settings:', error)
+    stripeError.value = error.message || 'Errore nel caricamento delle impostazioni Stripe'
+  } finally {
+    stripeLoading.value = false
+  }
+}
+
+// Switch Stripe mode
+const switchStripeMode = async (mode) => {
+  stripeSaving.value = true
+
+  try {
+    const result = await updateStripeMode(catalystRowId.value, mode)
+    stripeSettings.value.mode = result.newMode
+    showToast({ message: `Modalità Stripe cambiata a ${mode.toUpperCase()}`, type: 'success' })
+    console.log('Stripe mode changed:', result.previousMode, '→', result.newMode)
+  } catch (error) {
+    console.error('Error switching Stripe mode:', error)
+    showToast({ message: error.message || 'Errore nel cambio modalità', type: 'error' })
+  } finally {
+    stripeSaving.value = false
+  }
+}
+
+// Confirm switch to live mode
+const confirmLiveMode = () => {
+  if (confirm('ATTENZIONE: Stai per attivare la modalità LIVE.\n\nTutti i pagamenti saranno REALI e verranno addebitati sulle carte dei clienti.\n\nSei sicuro di voler procedere?')) {
+    switchToLive()
+  }
+}
+
+// Switch to live with confirmation token
+const switchToLive = async () => {
+  stripeSaving.value = true
+
+  try {
+    const result = await updateStripeMode(catalystRowId.value, 'live', 'LIVE_MODE_CONFIRMED')
+    stripeSettings.value.mode = result.newMode
+    showToast({ message: 'Modalità LIVE attivata', type: 'success' })
+    console.log('Stripe mode changed to LIVE')
+  } catch (error) {
+    console.error('Error switching to live mode:', error)
+    showToast({ message: error.message || 'Errore nell\'attivazione modalità LIVE', type: 'error' })
+  } finally {
+    stripeSaving.value = false
+  }
 }
 
 // Format currency
@@ -1506,5 +1615,98 @@ const goToUserDashboard = () => {
   .stat-card {
     padding: 1.25rem;
   }
+}
+
+/* Stripe management */
+.stripe-mode-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.stripe-mode-box.test {
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+}
+
+.stripe-mode-box.live {
+  background: #fef2f2;
+  border: 2px solid #ef4444;
+}
+
+.mode-badge {
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+}
+
+.stripe-mode-box.test .mode-badge {
+  background: #10b981;
+  color: white;
+}
+
+.stripe-mode-box.live .mode-badge {
+  background: #ef4444;
+  color: white;
+}
+
+.mode-text {
+  font-size: 1rem;
+  color: #374151;
+}
+
+.stripe-switch {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.switch-btn {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.switch-btn:hover:not(:disabled) {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.switch-btn.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.switch-btn.live:hover:not(:disabled) {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.switch-btn.live.active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+.switch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stripe-info {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
 }
 </style>

@@ -993,3 +993,60 @@ export async function createStripeDashboardLink(accountId) {
     throw error
   }
 }
+
+/**
+ * Get Stripe settings for admin panel (Admin only)
+ * Returns current mode and masked keys
+ * @param {string} userId - Admin user's ROWID
+ * @returns {Promise<Object>} Stripe settings with masked keys
+ */
+export async function getStripeSettingsAdmin(userId) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/get-stripe-settings-admin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to get Stripe settings')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error getting Stripe settings (admin):', error)
+    throw error
+  }
+}
+
+/**
+ * Update Stripe mode (test/live) - Admin only
+ * @param {string} userId - Admin user's ROWID
+ * @param {string} mode - 'test' or 'live'
+ * @param {string|null} confirmationToken - Required for live mode ('LIVE_MODE_CONFIRMED')
+ * @returns {Promise<Object>} Update result with previousMode and newMode
+ */
+export async function updateStripeMode(userId, mode, confirmationToken = null) {
+  try {
+    const response = await fetch(`${CATALYST_BASE_URL}/update-stripe-mode`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, mode, confirmationToken })
+    })
+
+    const data = await response.json()
+    const parsedOutput = JSON.parse(data.output)
+
+    if (!parsedOutput.success) {
+      throw new Error(parsedOutput.error || 'Failed to update Stripe mode')
+    }
+
+    return parsedOutput
+  } catch (error) {
+    console.error('Error updating Stripe mode (admin):', error)
+    throw error
+  }
+}

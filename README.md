@@ -21,9 +21,9 @@ CalcioDomains is a full-stack web application that allows users to search, evalu
 │                        FRONTEND (Vue 3)                         │
 │                     Hosted on Catalyst                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  Views: Home | Domains | Dashboard | Profile | Admin | Cart     │
+│  Views: Home | Domains | WhyCalcio | Dashboard | Profile | Admin│
 │  Composables: useUser | useCart | useToast                      │
-│  Services: catalyst.js | freename.js                            │
+│  Services: catalyst.js | freename.js | auth.js                  │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ HTTPS API Calls
                            ▼
@@ -82,14 +82,37 @@ CalcioDomains is a full-stack web application that allows users to search, evalu
 ZohoCalcioDomains/
 ├── CalcioDomains/                 # Vue 3 Frontend
 │   ├── src/
-│   │   ├── assets/               # Static resources
+│   │   ├── assets/               # Static resources (CSS)
 │   │   ├── components/           # Reusable Vue components
+│   │   │   ├── NavBar.vue        # Navigation bar
+│   │   │   ├── CartModal.vue     # Shopping cart modal
+│   │   │   ├── CartIcon.vue      # Cart icon with badge
+│   │   │   ├── RechargeModal.vue # Credit recharge modal
+│   │   │   ├── TransferCouponModal.vue # Coupon transfer
+│   │   │   └── ToastContainer.vue # Toast notifications
 │   │   ├── composables/          # Vue 3 composables (global state)
+│   │   │   ├── useUser.js        # User data & authentication
+│   │   │   ├── useCart.js        # Shopping cart management
+│   │   │   └── useToast.js       # Toast notifications
+│   │   ├── config/               # Configuration files
+│   │   │   └── environment.js    # DEV/PROD environment config
 │   │   ├── router/               # Routing configuration
+│   │   │   └── index.js          # Vue Router setup
 │   │   ├── services/             # API services
+│   │   │   ├── catalyst.js       # Catalyst backend API calls
+│   │   │   ├── freename.js       # Freename domain API
+│   │   │   └── auth.js           # Catalyst native auth (legacy)
 │   │   ├── views/                # Application pages
+│   │   │   ├── HomeView.vue      # Landing page
+│   │   │   ├── DomainsView.vue   # Domain search & evaluation
+│   │   │   ├── WhyCalcioView.vue # Marketing page
+│   │   │   ├── DashboardView.vue # User dashboard
+│   │   │   ├── ProfileView.vue   # User profile management
+│   │   │   ├── AdminDashboardView.vue # Admin panel
+│   │   │   ├── SuccessView.vue   # Payment success page
+│   │   │   └── CancelView.vue    # Payment cancelled page
 │   │   ├── App.vue               # Root component
-│   │   └── main.js               # Entry point
+│   │   └── main.js               # Entry point with Auth0
 │   ├── public/                   # Public static files
 │   ├── package.json              # Frontend dependencies
 │   └── vite.config.js            # Vite configuration
@@ -155,6 +178,46 @@ catalyst deploy --only functions
 catalyst deploy --only client
 ```
 
+### Environment Configuration (DEV/PROD)
+
+The system automatically detects the environment based on the frontend hostname.
+
+#### Automatic Environment Detection
+
+The file `src/config/environment.js` handles all environment-specific configuration:
+
+```javascript
+const isProduction = window.location.hostname === 'app.calcio.domains'
+
+export const ENV = {
+  isProduction,
+  AUTH0_DOMAIN: isProduction
+    ? 'login-calcio-domains.eu.auth0.com'
+    : 'logintest-calcio-domains.eu.auth0.com',
+  AUTH0_CLIENT_ID: isProduction
+    ? 'cVKUgnNAarzLA0G0WYgE57MYG7tduGj9'
+    : 'ZPcqBmlnc2CUaXJLQCfvNUkTEtMAZLCh',
+  AUTH0_AUDIENCE: isProduction
+    ? 'https://login-calcio-domains.eu.auth0.com/api/v2/'
+    : 'https://logintest-calcio-domains.eu.auth0.com/api/v2/',
+  CATALYST_BASE_URL: isProduction
+    ? 'https://calciodomains-20105566495.catalystserverless.eu/server'
+    : 'https://calciodomains-20105566495.development.catalystserverless.eu/server'
+}
+```
+
+#### Configuration Table
+
+| Component | DEV | PROD |
+|-----------|-----|------|
+| **Hostname** | `*.onslate.eu` or other | `app.calcio.domains` |
+| **Auth0 Domain** | `logintest-calcio-domains.eu.auth0.com` | `login-calcio-domains.eu.auth0.com` |
+| **Auth0 Client ID** | `ZPcqBmlnc2CUaXJLQCfvNUkTEtMAZLCh` | `cVKUgnNAarzLA0G0WYgE57MYG7tduGj9` |
+| **Auth0 Audience** | `https://logintest-calcio-domains.eu.auth0.com/api/v2/` | `https://login-calcio-domains.eu.auth0.com/api/v2/` |
+| **Catalyst URL** | `development.catalystserverless.eu` | `catalystserverless.eu` |
+
+**Note**: Catalyst table IDs are the same in both DEV and PROD environments.
+
 ### Environment Variables
 
 #### Frontend (.env.local)
@@ -162,6 +225,8 @@ catalyst deploy --only client
 ```env
 VITE_MOCK_AUTH=false
 ```
+
+Auth0 credentials are managed automatically by `environment.js` - no environment variables needed.
 
 #### Backend (Catalyst Environment)
 
@@ -174,6 +239,8 @@ FREENAME_API_KEY=xxx
 SUCCESS_URL=https://your-domain.com/success
 CANCEL_URL=https://your-domain.com/cancel
 ```
+
+Backend functions do not require Auth0 configuration (token is already validated by frontend).
 
 ## API Endpoints
 
@@ -211,24 +278,72 @@ CANCEL_URL=https://your-domain.com/cancel
 
 | Function                      | Method | Description                    |
 |-------------------------------|--------|--------------------------------|
-| `get-user-coupons`            | GET    | Get user coupons               |
+| `get-user-coupons`            | POST   | Get user coupons               |
 | `transfer-coupon`             | POST   | Transfer coupon to another user|
-| `get-coupon-transfer-history` | GET    | Get transfer history           |
+| `get-coupon-transfer-history` | POST   | Get transfer history           |
+
+### Credits & Recharge
+
+| Function                   | Method | Description                    |
+|----------------------------|--------|--------------------------------|
+| `create-recharge-checkout` | POST   | Create Stripe checkout for credits |
+| `process-recharge`         | POST   | Process credit recharge        |
+| `get-user-orders`          | POST   | Get user's purchase history    |
+
+### User Profile
+
+| Function                   | Method | Description                    |
+|----------------------------|--------|--------------------------------|
+| `get-avatar`               | GET    | Get user avatar image          |
+| `update-user`              | POST   | Update profile (name, avatar)  |
+| `get-all-users`            | POST   | Get all users (for transfers)  |
+
+### Admin Functions
+
+| Function                   | Method | Description                    |
+|----------------------------|--------|--------------------------------|
+| `get-all-users-admin`      | POST   | Get all users with stats       |
+| `get-all-domains-admin`    | POST   | Get all sold domains           |
+| `get-all-coupons-admin`    | POST   | Get all coupons with details   |
+| `get-pricing-config`       | POST   | Get pricing configuration      |
+| `update-domain-level`      | POST   | Update domain level coefficient|
+| `get-prompts-admin`        | POST   | Get AI prompts                 |
+| `update-prompt`            | POST   | Update AI prompt content       |
+
+### Stripe Connect
+
+| Function                   | Method | Description                    |
+|----------------------------|--------|--------------------------------|
+| `create-sc-account`        | POST   | Create Express account         |
+| `create-sc-account-link`   | POST   | Create onboarding link         |
+| `get-sc-account-status`    | POST   | Get account verification status|
+| `create-sc-dashboard-link` | POST   | Create Express Dashboard link  |
+
+### Freename Integration
+
+| Function                   | Method | Description                    |
+|----------------------------|--------|--------------------------------|
+| `authenticate-freename`    | POST   | Get Freename API token         |
+| `search-freename-domains`  | POST   | Search domain availability     |
 
 ## Database Schema
 
 ### Users Table
 
-| Field                        | Type     | Description              |
-|------------------------------|----------|--------------------------|
-| ROWID                        | String   | Unique ID (auto-generated) |
-| auth0_id                     | String   | Auth0 user ID            |
-| email                        | String   | User email               |
-| name                         | String   | Full name                |
-| nickname                     | String   | Display username         |
-| credits                      | Number   | Credit balance (cents)   |
-| stripe_customer_id           | String   | Stripe customer ID       |
-| is_admin                     | Boolean  | Admin flag               |
+| Field                        | Type     | Description                    |
+|------------------------------|----------|--------------------------------|
+| ROWID                        | String   | Unique ID (auto-generated)     |
+| auth0_id                     | String   | Auth0 user ID                  |
+| email                        | String   | User email                     |
+| name                         | String   | Full name                      |
+| nickname                     | String   | Display username               |
+| credits                      | Number   | Credit balance (euros)         |
+| avatar_file_id               | String   | Catalyst File ID for avatar    |
+| stripe_customer_id           | String   | Stripe customer ID             |
+| is_admin                     | Boolean  | Admin flag                     |
+| first_recharge_bonus_claimed | Boolean  | First recharge bonus status    |
+| stripe_connect_account_id    | String   | Stripe Connect account ID      |
+| stripe_connect_status        | String   | Connect verification status    |
 
 ### Orders Table
 
