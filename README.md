@@ -309,6 +309,9 @@ Backend functions do not require Auth0 configuration (token is already validated
 | `update-domain-level`      | POST   | Update domain level coefficient|
 | `get-prompts-admin`        | POST   | Get AI prompts                 |
 | `update-prompt`            | POST   | Update AI prompt content       |
+| `get-stripe-settings-admin`| POST   | Get Stripe mode settings       |
+| `update-stripe-mode`       | POST   | Switch Stripe test/live mode   |
+| `get-stripe-config`        | POST   | Get active Stripe API keys     |
 
 ### Stripe Connect
 
@@ -339,7 +342,8 @@ Backend functions do not require Auth0 configuration (token is already validated
 | nickname                     | String   | Display username               |
 | credits                      | Number   | Credit balance (euros)         |
 | avatar_file_id               | String   | Catalyst File ID for avatar    |
-| stripe_customer_id           | String   | Stripe customer ID             |
+| stripe_customer_id_test      | String   | Stripe customer ID (test mode) |
+| stripe_customer_id_live      | String   | Stripe customer ID (live mode) |
 | is_admin                     | Boolean  | Admin flag                     |
 | first_recharge_bonus_claimed | Boolean  | First recharge bonus status    |
 | stripe_connect_account_id    | String   | Stripe Connect account ID      |
