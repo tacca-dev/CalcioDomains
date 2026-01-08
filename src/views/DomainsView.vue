@@ -141,6 +141,7 @@ async function handleSearch() {
                 domain: domainData.name,
                 available: domainData.availabilityStatus === 'AVAILABLE',
                 finalPrice: parseFloat((domainData.price.amount * coefficient).toFixed(2)),
+                category: suggestionData?.category || evaluation.category,
                 reserved: false
               })
             }
@@ -209,9 +210,9 @@ async function handleSearch() {
         <div v-else-if="mainDomainResult.available" class="result-card result-available">
           <h3 class="result-title">✓ {{ mainDomainResult.domain }} è disponibile!</h3>
           <div class="result-details">
-            <p>Prezzo base: ${{ mainDomainResult.basePrice }}</p>
+            <p>Prezzo base: €{{ mainDomainResult.basePrice }}</p>
             <p>Moltiplicatore: {{ mainDomainResult.coefficient }}x</p>
-            <p class="result-final-price">Prezzo finale: ${{ mainDomainResult.finalPrice }}</p>
+            <p class="result-final-price">Prezzo finale: €{{ mainDomainResult.finalPrice }}</p>
           </div>
           <button
             class="add-to-cart-button"
@@ -249,7 +250,7 @@ async function handleSearch() {
               <span class="suggestion-domain">{{ suggestion.domain }}</span>
               <span v-if="suggestion.reserved" class="suggestion-reserved-label">Riservato</span>
               <span v-else-if="!suggestion.available" class="suggestion-unavailable-label">Non disponibile</span>
-              <span v-else class="suggestion-price">${{ suggestion.finalPrice }}</span>
+              <span v-else class="suggestion-price">€{{ suggestion.finalPrice }}</span>
             </div>
             <button
               v-if="suggestion.available && !suggestion.reserved"

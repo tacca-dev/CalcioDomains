@@ -57,7 +57,7 @@
               <span class="item-category">{{ item.category }}</span>
             </div>
             <div class="item-actions">
-              <span class="item-price">${{ item.price.toFixed(2) }}</span>
+              <span class="item-price">€{{ item.price.toFixed(2) }}</span>
               <button
                 class="remove-button"
                 @click="removeFromCart(item.domain_name)"
