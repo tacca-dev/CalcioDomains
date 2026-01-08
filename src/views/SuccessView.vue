@@ -51,7 +51,7 @@
           <p class="info-value">{{ sessionId }}</p>
         </div>
 
-        <div v-if="!isCreditsPayment && !isFreeOrder" class="test-notice">
+        <div v-if="!isCreditsPayment && !isFreeOrder && isTestPayment" class="test-notice">
           <p>⚠️ <strong>TEST MODE</strong></p>
           <p>Nessun addebito reale è stato effettuato. Questo è un pagamento di test su Stripe.</p>
         </div>
@@ -86,6 +86,7 @@ const isRecharge = ref(false)
 const isCreditsPayment = ref(false)
 const isFreeOrder = ref(false)
 const creditBonus = ref(0)
+const isTestPayment = ref(false)
 
 async function getCatalystRowId() {
   try {
@@ -121,6 +122,10 @@ onMounted(async () => {
   sessionId.value = route.query.session_id || null
   const orderId = route.query.order_id || null
   const paymentType = route.query.type || 'order' // 'order', 'recharge', 'credits', or 'free'
+
+  // Detect if this is a test payment based on session_id prefix
+  // Stripe test sessions start with 'cs_test_', live sessions start with 'cs_live_'
+  isTestPayment.value = sessionId.value?.startsWith('cs_test_') || false
 
   // Set isRecharge based on payment type BEFORE processing
   isRecharge.value = paymentType === 'recharge'
