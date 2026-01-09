@@ -79,6 +79,7 @@ const loading = ref(false)
 
 // Available packages
 const packages = [
+  { amount: 0.5 },
   { amount: 500 },
   { amount: 1000 },
   { amount: 2500 },
@@ -93,6 +94,7 @@ const getBonusPercentage = (amount) => {
   }
 
   const bonusPercentages = {
+    0.5: 0,
     500: 0,
     1000: 5,
     2500: 10,
